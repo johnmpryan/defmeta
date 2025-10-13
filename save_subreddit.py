@@ -16,6 +16,7 @@ for subreddit in subreddits_to_fetch:
     # Check if we got valid data (a dictionary with the expected structure)
     if not isinstance(stats, dict) or subreddit not in stats:
         print(f"  ✗ Failed to fetch data for {subreddit}")
+        print(f"      Response was: {stats}")  # Add this line
         continue
     
     # Ensure subreddit exists in reference table
