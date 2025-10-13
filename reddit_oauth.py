@@ -28,14 +28,51 @@ def get_subreddit_stats_oauth(subreddit_name):
         print(f"Error fetching {subreddit_name}: {e}")
         return None
 
+def get_recent_post_count_oauth(subreddit_name):
+    """Count posts from yesterday using OAuth."""
+    from datetime import datetime, timedelta, UTC
+    
+    try:
+        reddit = get_reddit_client()
+        subreddit = reddit.subreddit(subreddit_name)
+        
+        # Get yesterday's date range
+        today = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        yesterday_start = today - timedelta(days=1)
+        yesterday_end = today
+        
+        start_timestamp = yesterday_start.timestamp()
+        end_timestamp = yesterday_end.timestamp()
+        
+        # Count posts from yesterday
+        post_count = 0
+        for submission in subreddit.new(limit=None):
+            if start_timestamp <= submission.created_utc < end_timestamp:
+                post_count += 1
+            elif submission.created_utc < start_timestamp:
+                break  # Stop when we hit older posts
+        
+        return post_count
+    except Exception as e:
+        print(f"Error fetching posts for {subreddit_name}: {e}")
+        return None
+
 if __name__ == "__main__":
     print("Testing OAuth connection...")
     
-    # Test with a simple subreddit
+    # Test 1: Subreddit stats
     result = get_subreddit_stats_oauth('python')
-    
     if result:
-        print("✓ OAuth working!")
+        print("✓ Subreddit stats working!")
         print(f"Result: {result}")
     else:
-        print("✗ OAuth failed")
+        print("✗ Subreddit stats failed")
+    
+    # Test 2: Post count
+    print("\nTesting post count...")
+    count = get_recent_post_count_oauth('python')
+    if count is not None:
+        print(f"✓ Post count working!")
+        print(f"Yesterday's posts in r/python: {count}")
+    else:
+        print("✗ Post count failed")

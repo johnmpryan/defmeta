@@ -4,8 +4,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'defmeta.settings')
 django.setup()
 
 from tracker.models import Subreddit, SubredditDailyStats
-from reddit_stats_to_dict import get_subreddit_stats
-from count_posts import get_recent_post_count
+#from reddit_stats_to_dict import get_subreddit_stats
+#from count_posts import get_recent_post_count
+from reddit_oauth import get_subreddit_stats_oauth
+from reddit_oauth import get_recent_post_count_oauth
 
 # Get all subreddits from the database
 all_subreddits = Subreddit.objects.all()
@@ -14,8 +16,8 @@ for subreddit in all_subreddits:
     print(f"Processing {subreddit.name}...")
     
     # Fetch data from both APIs
-    subreddit_data = get_subreddit_stats(subreddit.name)
-    post_count = get_recent_post_count(subreddit.name)
+    subreddit_data = get_subreddit_stats_oauth(subreddit.name)
+    post_count = get_recent_post_count_oauth(subreddit.name)
     
     # Extract subscriber count safely (returns None if API failed or structure is wrong)
     subscribers = None
