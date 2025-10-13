@@ -1,0 +1,56 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Home - Reddit Stats Tracker{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Tracked Subreddits</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Subreddit</th>
+                <th>Subscribers</th>
+                <th>Posts</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in subreddit_data %}
+            <tr>
+                <td>
+                    <a href="/r/{{ item.subreddit.name }}/" class="text-decoration-none">
+                        r/{{ item.subreddit.name }}
+                    </a>
+                </td>
+                <td>
+                    {% if item.latest_snapshot %}
+                        {{ item.latest_snapshot.subscribers_count|default:"N/A" }}
+                    {% else %}
+                        No data yet
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.latest_snapshot %}
+                        {{ item.latest_snapshot.posts_two_weeks_count|default:"N/A" }}
+                    {% else %}
+                        No data yet
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.latest_snapshot %}
+                        {{ item.latest_snapshot.date_created|date:"M d, Y g:i A" }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center text-muted">No subreddits tracked yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

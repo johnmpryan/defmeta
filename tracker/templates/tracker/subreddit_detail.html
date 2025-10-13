@@ -1,0 +1,77 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}r/{{ subreddit.name }} - Reddit Stats Tracker{% endblock %}
+
+{% block content %}
+<!-- Breadcrumbs -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">r/{{ subreddit.name }}</li>
+    </ol>
+</nav>
+
+<h1 class="mb-4">r/{{ subreddit.name }}</h1>
+
+{% if subreddit.subreddit_description %}
+<p class="text-muted">{{ subreddit.subreddit_description }}</p>
+{% endif %}
+
+<h2 class="h4 mt-4 mb-3">Snapshot History</h2>
+
+{% if page_obj %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Date</th>
+                <th>Subscribers</th>
+                <th>Posts Yesterday</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for snapshot in page_obj %}
+            <tr>
+                <td>{{ snapshot.date_created|date:"M d, Y g:i A" }}</td>
+                <td>{{ snapshot.subscribers_count|default:"N/A" }}</td>
+                <td>{{ snapshot.posts_two_weeks_count|default:"N/A" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center text-muted">No snapshots yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+        
+        <li class="page-item active">
+            <span class="page-link">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<p class="text-muted">No snapshot data available yet.</p>
+{% endif %}
+
+{% endblock %}

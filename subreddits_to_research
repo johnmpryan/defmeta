@@ -1,0 +1,6 @@
+import reddit_stats
+
+def subreddits = ["kentucky", "alabama", "oregon","louisiana","oklahoma"]
+
+for subreddit in subreddits:
+    print("subreddit")
