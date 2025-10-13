@@ -4,14 +4,15 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'defmeta.settings')
 django.setup()
 
 from tracker.models import Subreddit
-from reddit_stats_to_dict import get_subreddit_stats
+#from reddit_stats_to_dict import get_subreddit_stats
+from reddit_oauth import get_subreddit_stats_oauth
 
 # Fetch the data
 subreddits_to_fetch = ['kentucky','tennessee','WestVirginia','Indiana','ohio','NorthCarolina','Arkansas','missouri','illinois','louisiana','alabama','oregon','Oklahoma','Connecticut','utah','nevada','minnesota']
 
 for subreddit in subreddits_to_fetch:
     print(f"Processing {subreddit}...")
-    stats = get_subreddit_stats(subreddit)
+    stats = get_subreddit_stats_oauth(subreddit)
     
     # Check if we got valid data (a dictionary with the expected structure)
     if not isinstance(stats, dict) or subreddit not in stats:
