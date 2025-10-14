@@ -17,7 +17,7 @@ class Subreddit(models.Model):
 class SubredditDailyStats(models.Model):
     subreddit = models.ForeignKey(Subreddit, on_delete=models.CASCADE)
     subscribers_count = models.IntegerField(null=True, blank=True)
-    posts_two_weeks_count = models.IntegerField(null=True, blank=True)
+    posts_count = models.IntegerField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     avg_post_score = models.FloatField(null=True, blank=True)

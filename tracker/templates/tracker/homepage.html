@@ -32,7 +32,7 @@
                 </td>
                 <td>
                     {% if item.latest_snapshot %}
-                        {{ item.latest_snapshot.posts_two_weeks_count|default:"N/A" }}
+                        {{ item.latest_snapshot.posts_count|default:"N/A" }}
                     {% else %}
                         No data yet
                     {% endif %}
