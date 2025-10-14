@@ -27,6 +27,9 @@
                 <th>Date</th>
                 <th>Subscribers</th>
                 <th>Posts</th>
+                <th>Avg Upvote %</th>
+                <th>Avg Post Score</th>
+                <th>Ttl Comments</th>
             </tr>
         </thead>
         <tbody>
@@ -35,6 +38,9 @@
                 <td>{{ snapshot.date_created|date:"M d, Y g:i A" }}</td>
                 <td>{{ snapshot.subscribers_count|default:"N/A" }}</td>
                 <td>{{ snapshot.posts_two_weeks_count|default:"N/A" }}</td>
+                <td>{{ snapshot.avg_upvote_ratio|default:"N/A"}}</td>
+                <td>{{ snapshot.avg_post_score|default:"N/A"}}</td>
+                <td>{{ snapshot.total_comments|default:"N/A"}}</td>
             </tr>
             {% empty %}
             <tr>
