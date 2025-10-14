@@ -7,6 +7,9 @@ django.setup()
 
 from tracker.models import Subreddit, SubredditDailyStats
 from reddit_oauth import get_subreddit_stats_oauth, get_recent_post_count_oauth
+from logger_config import setup_logger
+
+logger = setup_logger('daily_snapshot')
 
 def collect_daily_snapshot():
     """Collect daily snapshot for all tracked subreddits"""
@@ -14,10 +17,10 @@ def collect_daily_snapshot():
     all_subreddits = Subreddit.objects.all()
     today = datetime.now(UTC).date()
     
-    print(f"Collecting snapshots for {all_subreddits.count()} subreddits on {today}")
+    logger.info(f"Starting snapshot collection for {all_subreddits.count()} subreddits on {today}")
     
     for subreddit in all_subreddits:
-        print(f"\nProcessing r/{subreddit.name}...")
+        logger.info(f"Processing r/{subreddit.name}")
         
         # Fetch data
         subreddit_data = get_subreddit_stats_oauth(subreddit.name)
@@ -41,15 +44,18 @@ def collect_daily_snapshot():
             )
             
             if created:
-                print(f"  ✓ Created snapshot: {subscribers} subscribers, {post_count} posts")
+                logger.info(f"Created snapshot: {subscribers} subscribers, {post_count} posts")
             else:
                 # Update existing snapshot
                 snapshot.subscribers_count = subscribers
                 snapshot.posts_count = post_count
                 snapshot.save()
-                print(f"  ↻ Updated existing snapshot: {subscribers} subscribers, {post_count} posts")
+                logger.info(f"Updated existing snapshot: {subscribers} subscribers, {post_count} posts")
         else:
-            print(f"  ✗ No data retrieved")
+            logger.warning(f"No data retrieved for r/{subreddit.name}")
+
+    logger.info("Snapshot collection complete")
+
 
 if __name__ == "__main__":
     collect_daily_snapshot()

@@ -7,6 +7,9 @@ django.setup()
 
 from tracker.models import Subreddit, SubredditDailyStats
 from reddit_oauth import get_reddit_client
+from logger_config import setup_logger
+
+logger = setup_logger('collect_engagement')
 
 def collect_engagement_data():
     """Collect engagement metrics for posts from 3 days ago"""
@@ -20,11 +23,11 @@ def collect_engagement_data():
         engagement_collected=False
     )
     
-    print(f"Found {snapshots.count()} snapshots from {three_days_ago} to process")
+    logger.info(f"Found {snapshots.count()} snapshots from {three_days_ago} to process")
     
     for snapshot in snapshots:
         subreddit_name = snapshot.subreddit.name
-        print(f"\nProcessing r/{subreddit_name}...")
+        logger.info(f"Processing r/{subreddit_name}")
         
         try:
             subreddit = reddit.subreddit(subreddit_name)
@@ -39,7 +42,7 @@ def collect_engagement_data():
                     break  # Posts are sorted newest first, stop when we pass the target date
             
             if not posts_from_that_day:
-                print(f"  No posts found from {three_days_ago}")
+                logger.info(f"No posts found from {three_days_ago}")
                 # Mark as collected even if no posts (so we don't keep checking)
                 snapshot.engagement_collected = True
                 snapshot.save()
@@ -61,13 +64,13 @@ def collect_engagement_data():
             snapshot.engagement_collected = True
             snapshot.save()
             
-            print(f"  ✓ Updated: {post_count} posts, avg score={avg_score:.1f}, avg ratio={avg_ratio:.2f}, {total_comments} comments")
+            logger.info(f"Updated: {post_count} posts, avg score={avg_score:.1f}, avg ratio={avg_ratio:.2f}, {total_comments} comments")
             
         except Exception as e:
-            print(f"  ✗ Error: {e}")
+            logger.error(f"Error processing r/{subreddit_name}: {e}")
             continue
     
-    print("\nEngagement collection complete!")
+    logger.info("Engagement collection complete")
 
 if __name__ == "__main__":
     collect_engagement_data()
