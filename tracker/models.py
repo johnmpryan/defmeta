@@ -4,6 +4,7 @@ class Subreddit(models.Model):
     name = models.CharField(max_length=100, unique=True)
     uri = models.URLField(max_length=200)
     subreddit_description = models.TextField(null=True, blank=True)
+    population = models.IntegerField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     
