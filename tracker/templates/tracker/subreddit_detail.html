@@ -37,14 +37,17 @@
             {% for snapshot in page_obj %}
             <tr>
                 <td>{{ snapshot.date_created|date:"M d, Y g:i A" }}</td>
-                <td>{{ snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}</td>
-                <td>{{ snapshot.posts_count|default_if_none:"N/A"|intcomma }}</td>
-                <td>{{ snapshot.avg_upvote_ratio|default_if_none:"N/A"}}</td>
-                <td>{{ snapshot.avg_post_score|default_if_none:"N/A"}}</td>
-                <td>{{ snapshot.total_comments|default_if_none:"N/A"|intcomma}}</td>
+                <td>{{ snapshot.subscribers_count|intcomma }}</td>
+                <td>{{ snapshot.posts_count|intcomma }}</td>
+                <td>
+                    {% if snapshot.avg_upvote_ratio is not None %}
+                        {% widthratio snapshot.avg_upvote_ratio 1 100 %}%
+                    {% endif %}
+                </td>
+                <td>{{ snapshot.avg_post_score|floatformat:0 }}</td>
+                <td>{{ snapshot.total_comments|default_if_none:""|intcomma }}</td>
             </tr>
-            {% empty %}
-            <tr>
+            {% empty %}            <tr>
                 <td colspan="3" class="text-center text-muted">No snapshots yet.</td>
             </tr>
             {% endfor %}
