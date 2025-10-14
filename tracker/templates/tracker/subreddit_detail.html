@@ -1,4 +1,5 @@
 {% extends 'tracker/base.html' %}
+{% load humanize %}
 
 {% block title %}r/{{ subreddit.name }} - Reddit Stats Tracker{% endblock %}
 
@@ -36,11 +37,11 @@
             {% for snapshot in page_obj %}
             <tr>
                 <td>{{ snapshot.date_created|date:"M d, Y g:i A" }}</td>
-                <td>{{ snapshot.subscribers_count|default:"N/A" }}</td>
-                <td>{{ snapshot.posts_count|default:"N/A" }}</td>
-                <td>{{ snapshot.avg_upvote_ratio|default:"N/A"}}</td>
-                <td>{{ snapshot.avg_post_score|default:"N/A"}}</td>
-                <td>{{ snapshot.total_comments|default:"N/A"}}</td>
+                <td>{{ snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}</td>
+                <td>{{ snapshot.posts_count|default_if_none:"N/A"|intcomma }}</td>
+                <td>{{ snapshot.avg_upvote_ratio|default_if_none:"N/A"}}</td>
+                <td>{{ snapshot.avg_post_score|default_if_none:"N/A"}}</td>
+                <td>{{ snapshot.total_comments|default_if_none:"N/A"|intcomma}}</td>
             </tr>
             {% empty %}
             <tr>
