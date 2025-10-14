@@ -1,26 +1,26 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from tracker.models import Subreddit, SubredditDailyStats
+from django.db.models import Count
 
 def homepage(request):
-    """Display all tracked subreddits with their latest stats."""
-    # Get all subreddits, ordered alphabetically
-    subreddits = Subreddit.objects.all().order_by('name')
+    # Annotate each subreddit with the count of related snapshots
+    subreddits = Subreddit.objects.annotate(
+        snapshot_count=Count('subredditdailystats')
+    ).all()
     
-    # For each subreddit, get its latest snapshot
-    subreddit_data = []
+    # Get the latest snapshot for each subreddit
+    subreddit_data = []  # Changed variable name
     for subreddit in subreddits:
-        latest_snapshot = SubredditDailyStats.objects.filter(
-            subreddit=subreddit
-        ).order_by('-date_created').first()
-        
+        latest_snapshot = subreddit.subredditdailystats_set.order_by('-date_created').first()
         subreddit_data.append({
             'subreddit': subreddit,
-            'latest_snapshot': latest_snapshot
+            'latest_snapshot': latest_snapshot,
+            'snapshot_count': subreddit.snapshot_count
         })
     
     return render(request, 'tracker/homepage.html', {
-        'subreddit_data': subreddit_data
+        'subreddit_data': subreddit_data  # Changed to match template
     })
 
 def subreddit_detail(request, subreddit_name):
