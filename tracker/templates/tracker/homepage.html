@@ -13,6 +13,48 @@
         margin: 20px 0;
     }
     
+    /* Column Headers */
+    .column-headers {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 2px solid #00FF00;
+        margin-bottom: 10px;
+    }
+    
+    .header-cell {
+        color: #00FF00;
+        cursor: pointer;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+    
+    .header-cell:hover {
+        opacity: 0.7;
+    }
+    
+    .header-name {
+        min-width: 180px;
+        margin-left: 25px; /* Account for prompt space */
+    }
+    
+    .header-stats-container {
+        display: flex;
+        gap: 40px;
+        margin-left: auto;
+    }
+    
+    .header-stat {
+        min-width: 90px;
+        text-align: right;
+    }
+    
+    /* Sort Arrow */
+    .sort-arrow {
+        margin-left: 5px;
+        font-size: 12px;
+    }
+    
     .terminal-line {
         padding: 12px 0;
         border-bottom: 1px solid #1a1a1a;
@@ -84,6 +126,49 @@
         padding: 40px;
         color: #888;
     }
+    
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 30px;
+        align-items: center;
+    }
+    
+    .page-btn {
+        background: #252525;
+        border: 1px solid #00FF00;
+        color: #00FF00;
+        padding: 8px 20px;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-family: 'Courier New', monospace;
+        cursor: pointer;
+    }
+    
+    .page-btn:hover {
+        background: #00FF00;
+        color: #1a1a1a;
+    }
+    
+    .page-btn:disabled,
+    .page-btn.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        border-color: #333;
+        color: #555;
+    }
+    
+    .page-btn.disabled:hover {
+        background: #252525;
+        color: #555;
+    }
+    
+    .page-info {
+        color: #888;
+        font-size: 14px;
+    }
 </style>
 {% endblock %}
 
@@ -92,6 +177,43 @@
     
     {% if subreddit_data %}
         <div class="terminal-layout">
+            <!-- Column Headers -->
+            <div class="column-headers">
+                <a href="?sort_by=name&order={% if current_sort == 'name' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-name">
+                    Subreddit
+                    {% if current_sort == 'name' %}
+                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                    {% endif %}
+                </a>
+                <div class="header-stats-container">
+                    <a href="?sort_by=subscribers&order={% if current_sort == 'subscribers' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-stat">
+                        Subscribers
+                        {% if current_sort == 'subscribers' %}
+                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                        {% endif %}
+                    </a>
+                    <a href="?sort_by=snapshots&order={% if current_sort == 'snapshots' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-stat">
+                        Snapshots
+                        {% if current_sort == 'snapshots' %}
+                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                        {% endif %}
+                    </a>
+                    <a href="?sort_by=posts&order={% if current_sort == 'posts' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-stat">
+                        Posts
+                        {% if current_sort == 'posts' %}
+                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                        {% endif %}
+                    </a>
+                    <a href="?sort_by=score&order={% if current_sort == 'score' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-stat">
+                        Avg Score
+                        {% if current_sort == 'score' %}
+                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Data Rows -->
             {% for item in subreddit_data %}
                 <div class="terminal-line">
                     <span class="prompt">$</span>
@@ -105,11 +227,10 @@
                                     N/A
                                 {% endif %}
                             </span>
-                            <span class="stat-label">subs</span>
                         </div>
                         <div class="terminal-stat">
                             <a href="/r/{{ item.subreddit.name }}/" class="stat-value">
-                                {{ item.snapshot_count|intcomma }} snapshots
+                                {{ item.snapshot_count|intcomma }}
                             </a>
                         </div>
                         <div class="terminal-stat">
@@ -120,7 +241,6 @@
                                     N/A
                                 {% endif %}
                             </span>
-                            <span class="stat-label">posts</span>
                         </div>
                         <div class="terminal-stat">
                             <span class="stat-value">
@@ -130,7 +250,6 @@
                                     N/A
                                 {% endif %}
                             </span>
-                            <span class="stat-label">score</span>
                         </div>
                     </div>
                 </div>
@@ -140,6 +259,25 @@
                 </div>
             {% endfor %}
         </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
+            {% else %}
+                <span class="page-btn disabled">← Previous</span>
+            {% endif %}
+            
+            <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
+            {% else %}
+                <span class="page-btn disabled">Next →</span>
+            {% endif %}
+        </div>
+        {% endif %}
     {% else %}
         <div class="empty-state">
             <p>No subreddits tracked yet.</p>

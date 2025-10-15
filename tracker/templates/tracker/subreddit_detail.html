@@ -15,9 +15,24 @@
         font-size: 14px;
     }
     
+    .table-header > a,
     .table-header > div {
         flex: 1;
         text-align: center;
+        color: #00FF00;
+        text-decoration: none;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    
+    .table-header > a:hover {
+        opacity: 0.7;
+    }
+    
+    /* Sort Arrow */
+    .sort-arrow {
+        margin-left: 5px;
+        font-size: 12px;
     }
     
     /* Table Rows */
@@ -105,12 +120,42 @@
         <div class="terminal-layout">
             <!-- Table Header -->
             <div class="table-header">
-                <div>Date</div>
-                <div>Subscribers</div>
-                <div>Posts</div>
-                <div>Avg Upvote %</div>
-                <div>Avg Score</div>
-                <div>Total Comments</div>
+                <a href="?sort_by=date_created&order={% if current_sort == 'date_created' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
+                    Date
+                    {% if current_sort == 'date_created' %}
+                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                    {% endif %}
+                </a>
+                <a href="?sort_by=subscribers_count&order={% if current_sort == 'subscribers_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
+                    Subscribers
+                    {% if current_sort == 'subscribers_count' %}
+                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                    {% endif %}
+                </a>
+                <a href="?sort_by=posts_count&order={% if current_sort == 'posts_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
+                    Posts
+                    {% if current_sort == 'posts_count' %}
+                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                    {% endif %}
+                </a>
+                <a href="?sort_by=avg_upvote_ratio&order={% if current_sort == 'avg_upvote_ratio' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
+                    Avg Upvote %
+                    {% if current_sort == 'avg_upvote_ratio' %}
+                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                    {% endif %}
+                </a>
+                <a href="?sort_by=avg_post_score&order={% if current_sort == 'avg_post_score' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
+                    Avg Score
+                    {% if current_sort == 'avg_post_score' %}
+                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                    {% endif %}
+                </a>
+                <a href="?sort_by=total_comments&order={% if current_sort == 'total_comments' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
+                    Total Comments
+                    {% if current_sort == 'total_comments' %}
+                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                    {% endif %}
+                </a>
             </div>
             
             <!-- Table Rows -->
@@ -138,7 +183,7 @@
         {% if page_obj.has_other_pages %}
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">← Previous</a>
+                <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
             {% else %}
                 <span class="page-btn disabled">← Previous</span>
             {% endif %}
@@ -146,7 +191,7 @@
             <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="page-btn">Next →</a>
+                <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
             {% else %}
                 <span class="page-btn disabled">Next →</span>
             {% endif %}
