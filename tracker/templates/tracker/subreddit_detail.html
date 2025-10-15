@@ -3,85 +3,158 @@
 
 {% block title %}r/{{ subreddit.name }} - Reddit Stats Tracker{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Table Headers */
+    .table-header {
+        display: flex;
+        padding: 12px 0;
+        border-bottom: 2px solid #00FF00;
+        font-weight: bold;
+        color: #00FF00;
+        font-size: 14px;
+    }
+    
+    .table-header > div {
+        flex: 1;
+        text-align: center;
+    }
+    
+    /* Table Rows */
+    .table-row {
+        display: flex;
+        align-items: center;
+    }
+    
+    .table-row > div {
+        flex: 1;
+        text-align: center;
+        color: #00FF00;
+    }
+    
+    /* Description */
+    .description {
+        color: #00FF00;
+        padding: 15px 0;
+        font-size: 14px;
+    }
+    
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 30px;
+        align-items: center;
+    }
+    
+    .page-btn {
+        background: #252525;
+        border: 1px solid #00FF00;
+        color: #00FF00;
+        padding: 8px 20px;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-family: 'Courier New', monospace;
+        cursor: pointer;
+    }
+    
+    .page-btn:hover {
+        background: #00FF00;
+        color: #1a1a1a;
+    }
+    
+    .page-btn:disabled,
+    .page-btn.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        border-color: #333;
+        color: #555;
+    }
+    
+    .page-btn.disabled:hover {
+        background: #252525;
+        color: #555;
+    }
+    
+    .page-info {
+        color: #888;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- Breadcrumbs -->
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">r/{{ subreddit.name }}</li>
-    </ol>
-</nav>
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">r/{{ subreddit.name }}</li>
+        </ol>
+    </nav>
 
-<h1 class="mb-4">r/{{ subreddit.name }}</h1>
+    <div class="section-header">r/{{ subreddit.name }}</div>
+    
+    {% if subreddit.subreddit_description %}
+    <p class="description">{{ subreddit.subreddit_description }}</p>
+    {% endif %}
 
-{% if subreddit.subreddit_description %}
-<p class="text-muted">{{ subreddit.subreddit_description }}</p>
-{% endif %}
-
-<h2 class="h4 mt-4 mb-3">Snapshot History</h2>
-
-{% if page_obj %}
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>Date</th>
-                <th>Subscribers</th>
-                <th>Posts</th>
-                <th>Avg Upvote %</th>
-                <th>Avg Post Score</th>
-                <th>Ttl Comments</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="section-header" style="margin-top: 40px;">SNAPSHOT HISTORY</div>
+    
+    {% if page_obj %}
+        <div class="terminal-layout">
+            <!-- Table Header -->
+            <div class="table-header">
+                <div>Date</div>
+                <div>Subscribers</div>
+                <div>Posts</div>
+                <div>Avg Upvote %</div>
+                <div>Avg Score</div>
+                <div>Total Comments</div>
+            </div>
+            
+            <!-- Table Rows -->
             {% for snapshot in page_obj %}
-            <tr>
-                <td>{{ snapshot.date_created|date:"M d, Y g:i A" }}</td>
-                <td>{{ snapshot.subscribers_count|intcomma }}</td>
-                <td>{{ snapshot.posts_count|intcomma }}</td>
-                <td>
+            <div class="terminal-line table-row">
+                <div>{{ snapshot.date_created|date:"Y-m-d" }}</div>
+                <div>{{ snapshot.subscribers_count|intcomma }}</div>
+                <div>{{ snapshot.posts_count|intcomma }}</div>
+                <div>
                     {% if snapshot.avg_upvote_ratio is not None %}
                         {% widthratio snapshot.avg_upvote_ratio 1 100 %}%
                     {% endif %}
-                </td>
-                <td>{{ snapshot.avg_post_score|floatformat:0 }}</td>
-                <td>{{ snapshot.total_comments|default_if_none:""|intcomma }}</td>
-            </tr>
-            {% empty %}            <tr>
-                <td colspan="3" class="text-center text-muted">No snapshots yet.</td>
-            </tr>
+                </div>
+                <div>{{ snapshot.avg_post_score|floatformat:0|intcomma }}</div>
+                <div>{{ snapshot.total_comments|default_if_none:""|intcomma }}</div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <p>No snapshots yet.</p>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Pagination -->
-{% if page_obj.has_other_pages %}
-<nav aria-label="Page navigation">
-    <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-        </li>
-        {% endif %}
+        </div>
         
-        <li class="page-item active">
-            <span class="page-link">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-        </li>
-        
-        {% if page_obj.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-        </li>
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">← Previous</a>
+            {% else %}
+                <span class="page-btn disabled">← Previous</span>
+            {% endif %}
+            
+            <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-btn">Next →</a>
+            {% else %}
+                <span class="page-btn disabled">Next →</span>
+            {% endif %}
+        </div>
         {% endif %}
-    </ul>
-</nav>
-{% endif %}
-
-{% else %}
-<p class="text-muted">No snapshot data available yet.</p>
-{% endif %}
-
+    {% else %}
+        <div class="empty-state">
+            <p>No snapshot data available yet.</p>
+        </div>
+    {% endif %}
 {% endblock %}

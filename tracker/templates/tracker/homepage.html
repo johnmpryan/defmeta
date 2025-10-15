@@ -1,58 +1,148 @@
-{% extends 'tracker/base.html' %}
+{% extends "tracker/base.html" %}
 {% load humanize %}
-{% block title %}Home - Reddit Stats Tracker{% endblock %}
+
+{% block title %}Reddit Stats - Homepage{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Terminal-style subreddit display */
+    .terminal-layout {
+        background: #0a0a0a;
+        border: 1px solid #2a662a;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .terminal-line {
+        padding: 12px 0;
+        border-bottom: 1px solid #1a1a1a;
+        display: flex;
+        align-items: center;
+    }
+    
+    .terminal-line:last-child {
+        border-bottom: none;
+    }
+    
+    .terminal-line:hover {
+        background: #151515;
+    }
+    
+    .prompt {
+        color: #00FF00;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+    
+    .terminal-name {
+        color: #00FF00;
+        text-decoration: underline;
+        margin-right: 30px;
+        min-width: 150px;
+        display: inline-block;
+    }
+    
+    .terminal-name:hover {
+        opacity: 0.8;
+    }
+    
+    .terminal-stats-container {
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+    }
+    
+    .terminal-stat {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .stat-value {
+        color: #00FF00;
+        text-align: right;
+        min-width: 90px;
+    }
+    
+    .stat-label {
+        color: #888;
+        font-size: 12px;
+    }
+    
+    /* Section Header */
+    .section-header {
+        color: #00FF00;
+        font-size: 18px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #333;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #888;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<h1 class="mb-4">Tracked Subreddits</h1>
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Subreddit</th>
-                <th>Subscribers</th>
-                <th>Snapshots</th>
-                <th>Posts Yesterday</th>
-                <th>Last Updated</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="section-header">TRACKED SUBREDDITS</div>
+    
+    {% if subreddit_data %}
+        <div class="terminal-layout">
             {% for item in subreddit_data %}
-            <tr>
-                <td>
-                    <a href="/r/{{ item.subreddit.name }}/" class="text-decoration-none">
-                        r/{{ item.subreddit.name }}
-                    </a>
-                </td>
-                <td>
-                    {% if item.latest_snapshot %}
-                        {{ item.latest_snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
-                    {% else %}
-                        No data yet
-                    {% endif %}
-                </td>
-                <td>
-                    {{ item.snapshot_count|intcomma }}
-                </td>
-                <td>
-                    {% if item.latest_snapshot %}
-                        {{ item.latest_snapshot.posts_count|default_if_none:"N/A"|intcomma }}
-                    {% else %}
-                        No data yet
-                    {% endif %}
-                </td>
-                <td>
-                    {% if item.latest_snapshot %}
-                        {{ item.latest_snapshot.date_created|date:"M d, Y g:i A" }}
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </td>
-            </tr>
+                <div class="terminal-line">
+                    <span class="prompt">$</span>
+                    <a href="/r/{{ item.subreddit.name }}/" class="terminal-name">r/{{ item.subreddit.name }}</a>
+                    <div class="terminal-stats-container">
+                        <div class="terminal-stat">
+                            <span class="stat-value">
+                                {% if item.latest_snapshot %}
+                                    {{ item.latest_snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                            <span class="stat-label">subs</span>
+                        </div>
+                        <div class="terminal-stat">
+                            <a href="/r/{{ item.subreddit.name }}/" class="stat-value">
+                                {{ item.snapshot_count|intcomma }} snapshots
+                            </a>
+                        </div>
+                        <div class="terminal-stat">
+                            <span class="stat-value">
+                                {% if item.latest_snapshot %}
+                                    {{ item.latest_snapshot.posts_count|default_if_none:"N/A"|intcomma }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                            <span class="stat-label">posts</span>
+                        </div>
+                        <div class="terminal-stat">
+                            <span class="stat-value">
+                                {% if item.latest_snapshot %}
+                                    {{ item.latest_snapshot.avg_post_score|default_if_none:"N/A"|floatformat:0|intcomma }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                            <span class="stat-label">score</span>
+                        </div>
+                    </div>
+                </div>
             {% empty %}
-            <tr>
-                <td colspan="5" class="text-center text-muted">No subreddits tracked yet.</td>
-            </tr>
+                <div class="empty-state">
+                    <p>No subreddits tracked yet.</p>
+                </div>
             {% endfor %}
-        </tbody>
-    </table>
-</div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No subreddits tracked yet.</p>
+        </div>
+    {% endif %}
 {% endblock %}

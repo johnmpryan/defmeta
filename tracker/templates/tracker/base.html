@@ -3,23 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Reddit Stats Tracker{% endblock %}</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% block title %}Reddit Stats{% endblock %}</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Main Content Container */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            color: #00FF00;
+            font-size: 32px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        /* Circular Navigation Menu */
+        .nav-menu {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 1000;
+        }
+        
+        .nav-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #00FF00;
+            border: 2px solid #00FF00;
+            color: #1a1a1a;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3);
+        }
+        
+        .nav-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .nav-items {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            background: #252525;
+            border: 1px solid #00FF00;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 200px;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .nav-items.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .nav-items a {
+            display: block;
+            color: #00FF00;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+            transition: all 0.2s;
+        }
+        
+        .nav-items a:last-child {
+            border-bottom: none;
+        }
+        
+        .nav-items a:hover {
+            background: #2a2a2a;
+            padding-left: 20px;
+        }
+        
+        .nav-items a.active {
+            background: #2a2a2a;
+            font-weight: bold;
+        }
+        
+        /* Content Block */
+        .content {
+            margin-top: 20px;
+        }
+        
+        /* Links */
+        a {
+            color: #00FF00;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            opacity: 0.8;
+        }
+        
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-muted {
+            color: #888;
+        }
+        
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+        
+        .mb-40 {
+            margin-bottom: 40px;
+        }
+        
+        /* Shared Terminal Styles */
+        .terminal-layout {
+            background: #0a0a0a;
+            border: 1px solid #2a662a;
+            padding: 20px;
+            margin: 20px 0;
+            width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .terminal-line {
+            padding: 12px 0;
+            border-bottom: 1px solid #1a1a1a;
+            display: flex;
+            align-items: center;
+        }
+        
+        .terminal-line:last-child {
+            border-bottom: none;
+        }
+        
+        .terminal-line:hover {
+            background: #151515;
+        }
+        
+        .prompt {
+            color: #00FF00;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .terminal-name {
+            color: #00FF00;
+            text-decoration: underline;
+            margin-right: 30px;
+            min-width: 150px;
+            display: inline-block;
+        }
+        
+        .terminal-name:hover {
+            opacity: 0.8;
+        }
+        
+        .terminal-stats-container {
+            display: flex;
+            gap: 60px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+        
+        .terminal-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stat-value {
+            color: #00FF00;
+            text-align: right;
+            min-width: 90px;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 12px;
+        }
+        
+        /* Section Header */
+        .section-header {
+            color: #00FF00;
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        /* Breadcrumbs */
+        .breadcrumb {
+            list-style: none;
+            display: flex;
+            gap: 10px;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item:before {
+            content: ">";
+            margin-right: 10px;
+            color: #00FF00;
+        }
+        
+        .breadcrumb-item.active {
+            color: #00FF00;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/">Reddit Stats Tracker</a>
-        </div>
-    </nav>
-    
+    <!-- Main Container -->
     <div class="container">
-        {% block content %}
-        {% endblock %}
+        <header>
+            <h1>{% block header %}REDDIT STATS{% endblock %}</h1>
+            <p class="subtitle">{% block subtitle %}Tracking subreddit metrics{% endblock %}</p>
+        </header>
+        
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
     </div>
     
-    <!-- Bootstrap JS (optional, for interactive components) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Circular Navigation Menu -->
+    <div class="nav-menu">
+        <button class="nav-toggle" onclick="toggleNav()" aria-label="Navigation Menu">
+            ⊕
+        </button>
+        <div class="nav-items" id="navItems">
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}">Reddit Stats</a>
+            <!-- Add more apps here as they're built -->
+            <!-- <a href="/app2/">App Name 2</a> -->
+            <!-- <a href="/app3/">App Name 3</a> -->
+        </div>
+    </div>
+    
+    <script>
+        function toggleNav() {
+            const navItems = document.getElementById('navItems');
+            navItems.classList.toggle('active');
+        }
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navMenu = document.querySelector('.nav-menu');
+            const navItems = document.getElementById('navItems');
+            
+            if (!navMenu.contains(event.target) && navItems.classList.contains('active')) {
+                navItems.classList.remove('active');
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
