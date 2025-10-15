@@ -4,11 +4,11 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'defmeta.settings')
 django.setup()
 
 from tracker.models import Subreddit
-#from reddit_stats_to_dict import get_subreddit_stats
 from reddit_oauth import get_subreddit_stats_oauth
 
 # Fetch the data
-subreddits_to_fetch = ['kentucky','tennessee','WestVirginia','Indiana','ohio','NorthCarolina','Arkansas','missouri','illinois','louisiana','alabama','oregon','Oklahoma','Connecticut','utah','nevada','minnesota']
+# Original set: subreddits_to_fetch = ['kentucky','tennessee','WestVirginia','Indiana','ohio','NorthCarolina','Arkansas','missouri','illinois','louisiana','alabama','oregon','Oklahoma','Connecticut','utah','nevada','minnesota']
+subreddits_to_fetch = ['Maine', 'NewHampshire', 'Vermont', 'massachusetts', 'RhodeIsland', 'newyork', 'pennsylvania', 'newjersey','Delaware', 'maryland', 'Virginia', 'SouthCarolina', 'georgia', 'florida', 'Michigan', 'wisconsin', 'Iowa', 'NorthDakota', 'SouthDakota', 'nebraska', 'kansas', 'texas', 'NewMexico', 'Colorado', 'wyoming', 'Montana', 'Idaho', 'california', 'washington', 'arizona','Alaska', 'hawaii']
 
 for subreddit in subreddits_to_fetch:
     print(f"Processing {subreddit}...")
