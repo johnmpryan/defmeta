@@ -175,9 +175,8 @@
 {% block content %}
     <div class="section-header">TRACKED SUBREDDITS</div>
     
-    <p class="description">This application tracks engagement across U.S. State subreddits. Activity snapshots are taken everynight for each subreddit. Subscribers count, post count, and daily comment count. The table below shows most recent subscriber and post count, as well as the number of 'snapshots' we have for each subreddit.</p>
-
-    <p class="description">NOTE:  Improvements are planned to account for state timezone when polling for updates.</p>    
+    <p class="description">This application tracks engagement across U.S. State subreddits.</p>
+    <p class="description">The table below shows most recent subscriber and post counts, as well as the count of daily 'snapshots'. Snapshots can be viewed by clicking on subreddit name.</p>
 
     {% if subreddit_data %}
         <div class="terminal-layout">
