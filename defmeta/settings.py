@@ -27,7 +27,14 @@ SECRET_KEY = 'django-insecure-4s0xpoy%e_5f)oktlb$0#b4m47ar&6j!-#r03(348i3g8yp__l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','defmeta.xyz','www.defmeta.xyz']
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1',
+    'reddit-stats-app-d58bc996c752.herokuapp.com',
+    'defmeta.xyz',
+    'www.defmeta.xyz',
+    '.defmeta.xyz',
+    ]
 
 
 # Application definition
