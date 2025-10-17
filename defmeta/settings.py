@@ -145,7 +145,15 @@ if os.environ.get('DATABASE_URL'):
     # Running on Heroku
     DATABASES['default'] = dj_database_url.config(conn_max_age=600)
     DEBUG = False
-    ALLOWED_HOSTS = [os.environ.get('HEROKU_APP_NAME', '') + '.herokuapp.com', 'localhost', '127.0.0.1']
+    ALLOWED_HOSTS = [
+        os.environ.get('HEROKU_APP_NAME', '') + '.herokuapp.com',
+        'localhost', 
+        '127.0.0.1',
+        'reddit-stats-app-d58bc996c752.herokuapp.com',
+        'defmeta.xyz',
+        'www.defmeta.xyz',
+        '.defmeta.xyz',
+        ]
 else:
     # Running locally - use the settings defined above
     pass
