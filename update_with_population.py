@@ -118,7 +118,7 @@ def main():
     csv_filename = r"state_data/state_populations.csv"
     
     # Choose which database to update
-    update_populations_from_csv(csv_filename, local_db_config)
+    update_populations_from_csv(csv_filename, heroku_db_config)
 
 if __name__ == "__main__":
     main()
