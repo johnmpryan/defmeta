@@ -107,10 +107,10 @@ def main():
     # HEROKU DATABASE CONFIG (if needed)
     # Get connection details from: heroku pg:credentials:url -a reddit-stats-app
     heroku_db_config = {
-        'host': 'YOUR_HEROKU_HOST',
-        'database': 'YOUR_HEROKU_DB',
-        'user': 'YOUR_HEROKU_USER',
-        'password': 'YOUR_HEROKU_PASSWORD',
+        'host': 'cee3ebbhveeoab.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
+        'database': 'dbi0bcek8gd64g',
+        'user': 'uc70vi5ucv1h1h',
+        'password': 'p9c0919702d6539da6fa5d915e4e700a6bbe9b73fd41d274cbb40322d5fc61421',
         'port': 5432
     }
     
