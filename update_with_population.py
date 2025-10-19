@@ -115,7 +115,7 @@ def main():
     }
     
     # CSV file location
-    csv_filename = r"state_data\state_populations.csv"
+    csv_filename = r"state_data/state_populations.csv"
     
     # Choose which database to update
     update_populations_from_csv(csv_filename, local_db_config)
