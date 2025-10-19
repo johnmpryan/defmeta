@@ -8,6 +8,9 @@ class Subreddit(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     land_area = models.IntegerField(null=True, blank=True)
+    region = models.CharField(max_length=100,null=True, blank=True)
+    timezone = models.CharField(max_length=100,null=True, blank=True)
+    residents_over_18 = models.IntegerField(null=True, blank=True)
     
     class Meta:
         db_table = 'subreddits'
