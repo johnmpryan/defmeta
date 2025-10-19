@@ -7,6 +7,7 @@ class Subreddit(models.Model):
     population = models.IntegerField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
+    land_area = models.IntegerField(null=True, blank=True)
     
     class Meta:
         db_table = 'subreddits'
