@@ -3,7 +3,6 @@ from django.core.paginator import Paginator
 from tracker.models import Subreddit, SubredditDailyStats
 from django.db.models import Count, OuterRef, Subquery
 from datetime import datetime, UTC
-import plotext as plt
 
 def homepage(request):
     """Homepage with tabbed DATA/ANALYSIS view"""
