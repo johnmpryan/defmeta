@@ -5,6 +5,58 @@
 
 {% block extra_css %}
 <style>
+    /* ===== TAB NAVIGATION ===== */
+    .tab-container {
+        display: flex;
+        gap: 0;
+        margin-bottom: 0;
+        border-bottom: 2px solid #2a662a;
+    }
+    
+    .tab-button {
+        background: #1a1a1a;
+        color: #888;
+        border: 2px solid #2a662a;
+        border-bottom: none;
+        padding: 10px 30px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .tab-button:hover {
+        background: #252525;
+        color: #00FF00;
+    }
+    
+    .tab-button.active {
+        background: #252525;
+        color: #00FF00;
+        border-bottom: 2px solid #252525;
+        margin-bottom: -2px;
+    }
+    
+    .tab-content {
+        display: none;
+        padding: 30px;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    /* ===== CHART STYLING ===== */
+    .chart-display {
+        color: #00FF00;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        line-height: 1.2;
+        overflow-x: auto;
+        white-space: pre;
+        margin: 20px 0;
+    }
+    
     /* ===== HOMEPAGE-SPECIFIC TABLE LAYOUT ===== */
     
     /* Desktop: prompt (25px) + name (180px) + 4 stat columns */
@@ -58,17 +110,27 @@
     /* Very small mobile: Tighten spacing further */
     @media (max-width: 480px) {
         .table-header {
-            grid-template-columns: 20px 1fr 140px;
+            grid-template-columns: 20px 1fr 100px;
             gap: 10px;
         }
         
         .table-row {
-            grid-template-columns: 20px 1fr 140px;
+            grid-template-columns: 20px 1fr 100px;
             gap: 10px;
         }
         
         .row-name {
             font-size: 14px;
+        }
+        
+        .header-name,
+        .header-cell {
+            font-size: 14px;
+        }
+        
+        .tab-button {
+            padding: 8px 20px;
+            font-size: 12px;
         }
     }
 </style>
@@ -78,111 +140,147 @@
     <div class="section-header">TRACKED SUBREDDITS</div>
     
     <p class="description">This application tracks engagement across U.S. State subreddits.</p>
-    <p class="description">The table below shows most recent subscriber and post counts, as well as the count of daily 'snapshots'. Snapshots can be viewed by clicking on subreddit name.</p>
 
-    {% if subreddit_data %}
-        <div class="terminal-table-container">
-            <div class="terminal-table">
-                <!-- Header Row -->
-                <div class="table-header">
-                    <div class="header-prompt"></div>
-                    <a href="?sort_by=name&order={% if current_sort == 'name' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
-                        Subreddit
-                        {% if current_sort == 'name' %}
-                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                        {% endif %}
-                    </a>
-                    <div class="header-stats">
-                        <a href="?sort_by=subscribers&order={% if current_sort == 'subscribers' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-subscribers">
-                            Subscribers
-                            {% if current_sort == 'subscribers' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <a href="?sort_by=snapshots&order={% if current_sort == 'snapshots' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-snapshots">
-                            Snapshots
-                            {% if current_sort == 'snapshots' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <a href="?sort_by=posts&order={% if current_sort == 'posts' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-posts">
-                            Posts
-                            {% if current_sort == 'posts' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <a href="?sort_by=score&order={% if current_sort == 'score' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-score">
-                            Avg Score
-                            {% if current_sort == 'score' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Data Rows -->
-                {% for item in subreddit_data %}
-                    <div class="table-row">
-                        <span class="row-prompt">$</span>
-                        <a href="/r/{{ item.subreddit.name }}/" class="row-name">r/{{ item.subreddit.name }}</a>
-                        <div class="row-stats">
-                            <div class="stat-value stat-subscribers">
-                                {% if item.latest_snapshot %}
-                                    {{ item.latest_snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </div>
-                            <div class="stat-value stat-snapshots">
-                                <a href="/r/{{ item.subreddit.name }}/">
-                                    {{ item.snapshot_count|intcomma }}
-                                </a>
-                            </div>
-                            <div class="stat-value stat-posts">
-                                {% if item.latest_snapshot %}
-                                    {{ item.latest_snapshot.posts_count|default_if_none:"N/A"|intcomma }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </div>
-                            <div class="stat-value stat-score">
-                                {% if item.latest_snapshot %}
-                                    {{ item.latest_snapshot.avg_post_score|default_if_none:"N/A"|floatformat:0|intcomma }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="empty-state">
-                        <p>No subreddits tracked yet.</p>
-                    </div>
-                {% endfor %}
-            </div>
+    <!-- Tab Navigation -->
+    <div class="terminal-table-container" style="margin-top: 30px;">
+        <div class="tab-container">
+            <button class="tab-button active" onclick="switchTab('data')">DATA</button>
+            <button class="tab-button" onclick="switchTab('analysis')">ANALYSIS</button>
         </div>
         
-        <!-- Pagination -->
-        {% if page_obj.has_other_pages %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
-            {% else %}
-                <span class="page-btn disabled">← Previous</span>
-            {% endif %}
+        <!-- DATA Tab Content -->
+        <div id="data-tab" class="tab-content active">
+            <p class="description">The table below shows most recent subscriber and post counts, as well as the count of daily 'snapshots'. Snapshots can be viewed by clicking on subreddit name.</p>
             
-            <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
+            {% if subreddit_data %}
+                <div class="terminal-table">
+                    <!-- Header Row -->
+                    <div class="table-header">
+                        <div class="header-prompt"></div>
+                        <a href="?sort_by=name&order={% if current_sort == 'name' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
+                            Subreddit
+                            {% if current_sort == 'name' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <div class="header-stats">
+                            <a href="?sort_by=subscribers&order={% if current_sort == 'subscribers' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-subscribers">
+                                Subscribers
+                                {% if current_sort == 'subscribers' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=snapshots&order={% if current_sort == 'snapshots' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-snapshots">
+                                Snapshots
+                                {% if current_sort == 'snapshots' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=posts&order={% if current_sort == 'posts' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-posts">
+                                Posts
+                                {% if current_sort == 'posts' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=score&order={% if current_sort == 'score' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-score">
+                                Avg Score
+                                {% if current_sort == 'score' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Rows -->
+                    {% for item in subreddit_data %}
+                        <div class="table-row">
+                            <span class="row-prompt">$</span>
+                            <a href="/r/{{ item.subreddit.name }}/" class="row-name">r/{{ item.subreddit.name }}</a>
+                            <div class="row-stats">
+                                <div class="stat-value stat-subscribers">
+                                    {% if item.latest_snapshot %}
+                                        {{ item.latest_snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div class="stat-value stat-snapshots">
+                                    <a href="/r/{{ item.subreddit.name }}/">
+                                        {{ item.snapshot_count|intcomma }}
+                                    </a>
+                                </div>
+                                <div class="stat-value stat-posts">
+                                    {% if item.latest_snapshot %}
+                                        {{ item.latest_snapshot.posts_count|default_if_none:"N/A"|intcomma }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div class="stat-value stat-score">
+                                    {% if item.latest_snapshot %}
+                                        {{ item.latest_snapshot.avg_post_score|default_if_none:"N/A"|floatformat:0|intcomma }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <p>No subreddits tracked yet.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
+                    {% else %}
+                        <span class="page-btn disabled">← Previous</span>
+                    {% endif %}
+                    
+                    <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
+                    {% else %}
+                        <span class="page-btn disabled">Next →</span>
+                    {% endif %}
+                </div>
+                {% endif %}
             {% else %}
-                <span class="page-btn disabled">Next →</span>
+                <div class="empty-state">
+                    <p>No subreddits tracked yet.</p>
+                </div>
             {% endif %}
         </div>
-        {% endif %}
-    {% else %}
-        <div class="empty-state">
-            <p>No subreddits tracked yet.</p>
+        
+        <!-- ANALYSIS Tab Content -->
+        <div id="analysis-tab" class="tab-content">
+            <h2>State Subreddits by Subscriber Count</h2>
+            <pre class="chart-display">{{ chart }}</pre>
         </div>
-    {% endif %}
+    </div>
+
+<script>
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active state from all buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName + '-tab').classList.add('active');
+    
+    // Activate clicked button
+    event.target.classList.add('active');
+}
+</script>
 {% endblock %}
