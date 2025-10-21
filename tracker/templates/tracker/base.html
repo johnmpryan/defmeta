@@ -59,6 +59,13 @@
             top: 30px;
             left: 30px;
             z-index: 1000;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .nav-menu.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
         }
         
         .nav-toggle {
@@ -166,7 +173,20 @@
             margin-bottom: 40px;
         }
         
-        /* Shared Terminal Styles */
+        /* ===== SHARED TERMINAL TABLE SYSTEM ===== */
+        
+        /* Terminal Box Container for Tables */
+        .terminal-table-container {
+            background: #0a0a0a;
+            border: 1px solid #2a662a;
+            padding: 20px;
+            margin: 20px 0;
+            width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Legacy terminal-layout support */
         .terminal-layout {
             background: #0a0a0a;
             border: 1px solid #2a662a;
@@ -177,6 +197,115 @@
             margin-right: auto;
         }
         
+        /* Table Structure */
+        .terminal-table {
+            width: 100%;
+        }
+        
+        /* Header Row - Override grid-template-columns in page-specific CSS */
+        .table-header {
+            display: grid;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 2px solid #00FF00;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .header-prompt {
+            /* Empty space for prompt alignment */
+        }
+        
+        .header-name {
+            color: #00FF00;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        
+        .header-name:hover {
+            opacity: 0.7;
+        }
+        
+        .header-stats {
+            display: grid;
+            gap: 15px;
+            text-align: right;
+        }
+        
+        .header-cell {
+            color: #00FF00;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        
+        .header-cell:hover {
+            opacity: 0.7;
+        }
+        
+        /* Sort Arrow */
+        .sort-arrow {
+            margin-left: 5px;
+            font-size: 12px;
+        }
+        
+        /* Data Rows - Override grid-template-columns in page-specific CSS */
+        .table-row {
+            display: grid;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #1a1a1a;
+            align-items: center;
+        }
+        
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        
+        .table-row:hover {
+            background: #151515;
+        }
+        
+        .row-prompt {
+            color: #00FF00;
+            font-weight: bold;
+        }
+        
+        .row-name {
+            color: #00FF00;
+            text-decoration: underline;
+        }
+        
+        .row-name:hover {
+            opacity: 0.8;
+        }
+        
+        .row-stats {
+            display: grid;
+            gap: 15px;
+            text-align: right;
+        }
+        
+        .stat-value {
+            color: #00FF00;
+        }
+        
+        .stat-value a {
+            color: #00FF00;
+            text-decoration: underline;
+        }
+        
+        .stat-value a:hover {
+            opacity: 0.8;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 12px;
+        }
+        
+        /* Legacy terminal-line support */
         .terminal-line {
             padding: 12px 0;
             border-bottom: 1px solid #1a1a1a;
@@ -223,18 +352,81 @@
             gap: 5px;
         }
         
-        .stat-value {
+        /* ===== RESPONSIVE TABLE BEHAVIOR ===== */
+        
+        @media (max-width: 768px) {
+            /* Reduce padding in terminal containers */
+            .terminal-table-container,
+            .terminal-layout {
+                padding: 15px 10px;
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .nav-menu {
+                top: 10px;
+                left: 10px;
+            }
+            
+            .nav-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+        
+        /* ===== PAGINATION ===== */
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .page-btn {
+            background: #252525;
+            border: 1px solid #00FF00;
             color: #00FF00;
-            text-align: right;
-            min-width: 90px;
+            padding: 8px 20px;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
         }
         
-        .stat-label {
+        .page-btn:hover {
+            background: #00FF00;
+            color: #1a1a1a;
+        }
+        
+        .page-btn:disabled,
+        .page-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #333;
+            color: #555;
+        }
+        
+        .page-btn.disabled:hover {
+            background: #252525;
+            color: #555;
+        }
+        
+        .page-info {
             color: #888;
-            font-size: 12px;
+            font-size: 14px;
         }
         
-        /* Section Header */
+        /* ===== UTILITY CLASSES ===== */
+        
         .section-header {
             color: #00FF00;
             font-size: 18px;
@@ -243,11 +435,16 @@
             border-bottom: 1px solid #333;
         }
         
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 40px;
             color: #888;
+        }
+        
+        .description {
+            color: #00FF00;
+            padding: 15px 0;
+            font-size: 14px;
         }
         
         /* Breadcrumbs */
@@ -273,24 +470,13 @@
     </style>
     
     {% block extra_css %}{% endblock %}
+    
 <script type="text/javascript">
   window.heapReadyCb=window.heapReadyCb||[],window.heap=window.heap||[],heap.load=function(e,t){window.heap.envId=e,window.heap.clientConfig=t=t||{},window.heap.clientConfig.shouldFetchServerConfig=!1;var a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src="https://cdn.us.heap-api.com/config/"+e+"/heap_config.js";var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(a,r);var n=["init","startTracking","stopTracking","track","resetIdentity","identify","getSessionId","getUserId","getIdentity","addUserProperties","addEventProperties","removeEventProperty","clearEventProperties","addAccountProperties","addAdapter","addTransformer","addTransformerFn","onReady","addPageviewProperties","removePageviewProperty","clearPageviewProperties","trackPageview"],i=function(e){return function(){var t=Array.prototype.slice.call(arguments,0);window.heapReadyCb.push({name:e,fn:function(){heap[e]&&heap[e].apply(heap,t)}})}};for(var p=0;p<n.length;p++)heap[n[p]]=i(n[p])};
   heap.load("618084869");
 </script>
 </head>
 <body>
-    <!-- Main Container -->
-    <div class="container">
-        <header>
-            <h1>{% block header %}REDDIT STATS{% endblock %}</h1>
-            <p class="subtitle">{% block subtitle %}Tracking subreddit metrics{% endblock %}</p>
-        </header>
-        
-        <div class="content">
-            {% block content %}{% endblock %}
-        </div>
-    </div>
-    
     <!-- Circular Navigation Menu -->
     <div class="nav-menu">
         <button class="nav-toggle" onclick="toggleNav()" aria-label="Navigation Menu">
@@ -304,18 +490,48 @@
         </div>
     </div>
     
+    <!-- Main Container -->
+    <div class="container">
+        <header>
+            <h1>{% block header %}REDDIT STATS{% endblock %}</h1>
+            <p class="subtitle">{% block subtitle %}Tracking subreddit metrics{% endblock %}</p>
+        </header>
+        
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
     <script>
+        let lastScrollTop = 0;
+        const navMenu = document.querySelector('.nav-menu');
+        const navItems = document.getElementById('navItems');
+        
+        // Hide/show nav on scroll
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                // Scrolling down & past 100px
+                navMenu.classList.add('hidden');
+                navItems.classList.remove('active');
+            } else {
+                // Scrolling up or at top
+                navMenu.classList.remove('hidden');
+            }
+            
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+        
         function toggleNav() {
-            const navItems = document.getElementById('navItems');
             navItems.classList.toggle('active');
         }
         
         // Close menu when clicking outside
         document.addEventListener('click', function(event) {
-            const navMenu = document.querySelector('.nav-menu');
-            const navItems = document.getElementById('navItems');
+            const navMenuEl = document.querySelector('.nav-menu');
             
-            if (!navMenu.contains(event.target) && navItems.classList.contains('active')) {
+            if (!navMenuEl.contains(event.target) && navItems.classList.contains('active')) {
                 navItems.classList.remove('active');
             }
         });

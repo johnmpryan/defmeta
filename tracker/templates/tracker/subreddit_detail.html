@@ -5,96 +5,76 @@
 
 {% block extra_css %}
 <style>
-    /* Table Headers */
+    /* ===== DETAIL PAGE TABLE LAYOUT ===== */
+    
+    /* Desktop: prompt (25px) + date (140px) + 5 stat columns with specific widths */
     .table-header {
-        display: flex;
-        padding: 12px 0;
-        border-bottom: 2px solid #00FF00;
-        font-weight: bold;
-        color: #00FF00;
-        font-size: 14px;
+        grid-template-columns: 25px 140px 1fr;
     }
     
-    .table-header > a,
-    .table-header > div {
-        flex: 1;
-        text-align: center;
-        color: #00FF00;
-        text-decoration: none;
-        cursor: pointer;
-        transition: opacity 0.2s;
+    .header-stats {
+        grid-template-columns: 110px 90px 110px 100px 120px;
     }
     
-    .table-header > a:hover {
-        opacity: 0.7;
-    }
-    
-    /* Sort Arrow */
-    .sort-arrow {
-        margin-left: 5px;
-        font-size: 12px;
-    }
-    
-    /* Table Rows */
     .table-row {
-        display: flex;
-        align-items: center;
+        grid-template-columns: 25px 140px 1fr;
     }
     
-    .table-row > div {
-        flex: 1;
-        text-align: center;
-        color: #00FF00;
+    .row-stats {
+        grid-template-columns: 110px 90px 110px 100px 120px;
     }
     
-    /* Description */
-    .description {
-        color: #00FF00;
-        padding: 15px 0;
-        font-size: 14px;
+    /* ===== RESPONSIVE: MOBILE ===== */
+    
+    /* Tablet/Mobile: Show only date and subscribers */
+    @media (max-width: 768px) {
+        .table-header {
+            grid-template-columns: 25px 1fr 120px;
+        }
+        
+        .header-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        /* Hide all stats except subscribers in header */
+        .header-stats .header-cell:not(.header-subscribers) {
+            display: none;
+        }
+        
+        .table-row {
+            grid-template-columns: 25px 1fr 120px;
+        }
+        
+        .row-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        /* Hide all stats except subscribers in rows */
+        .row-stats .stat-value:not(.stat-subscribers) {
+            display: none;
+        }
     }
     
-    /* Pagination */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 30px;
-        align-items: center;
-    }
-    
-    .page-btn {
-        background: #252525;
-        border: 1px solid #00FF00;
-        color: #00FF00;
-        padding: 8px 20px;
-        text-decoration: none;
-        transition: all 0.2s;
-        font-family: 'Courier New', monospace;
-        cursor: pointer;
-    }
-    
-    .page-btn:hover {
-        background: #00FF00;
-        color: #1a1a1a;
-    }
-    
-    .page-btn:disabled,
-    .page-btn.disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-        border-color: #333;
-        color: #555;
-    }
-    
-    .page-btn.disabled:hover {
-        background: #252525;
-        color: #555;
-    }
-    
-    .page-info {
-        color: #888;
-        font-size: 14px;
+    /* Very small mobile: Tighten spacing */
+    @media (max-width: 480px) {
+        .table-header {
+            grid-template-columns: 20px 1fr 100px;
+            gap: 10px;
+        }
+        
+        .table-row {
+            grid-template-columns: 20px 1fr 100px;
+            gap: 10px;
+        }
+        
+        .row-name {
+            font-size: 14px;
+        }
+        
+        .header-name,
+        .header-cell {
+            font-size: 14px;
+        }
     }
 </style>
 {% endblock %}
@@ -117,66 +97,84 @@
     <div class="section-header" style="margin-top: 40px;">SNAPSHOT HISTORY</div>
     
     {% if page_obj %}
-        <div class="terminal-layout">
-            <!-- Table Header -->
-            <div class="table-header">
-                <a href="?sort_by=date_created&order={% if current_sort == 'date_created' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
-                    Date
-                    {% if current_sort == 'date_created' %}
-                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                    {% endif %}
-                </a>
-                <a href="?sort_by=subscribers_count&order={% if current_sort == 'subscribers_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
-                    Subscribers
-                    {% if current_sort == 'subscribers_count' %}
-                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                    {% endif %}
-                </a>
-                <a href="?sort_by=posts_count&order={% if current_sort == 'posts_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
-                    Posts
-                    {% if current_sort == 'posts_count' %}
-                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                    {% endif %}
-                </a>
-                <a href="?sort_by=avg_upvote_ratio&order={% if current_sort == 'avg_upvote_ratio' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
-                    Avg Upvote %
-                    {% if current_sort == 'avg_upvote_ratio' %}
-                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                    {% endif %}
-                </a>
-                <a href="?sort_by=avg_post_score&order={% if current_sort == 'avg_post_score' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
-                    Avg Score
-                    {% if current_sort == 'avg_post_score' %}
-                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                    {% endif %}
-                </a>
-                <a href="?sort_by=total_comments&order={% if current_sort == 'total_comments' and current_order == 'desc' %}asc{% else %}desc{% endif %}">
-                    Total Comments
-                    {% if current_sort == 'total_comments' %}
-                        <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                    {% endif %}
-                </a>
-            </div>
-            
-            <!-- Table Rows -->
-            {% for snapshot in page_obj %}
-            <div class="terminal-line table-row">
-                <div>{{ snapshot.date_created|date:"Y-m-d" }}</div>
-                <div>{{ snapshot.subscribers_count|intcomma }}</div>
-                <div>{{ snapshot.posts_count|intcomma }}</div>
-                <div>
-                    {% if snapshot.avg_upvote_ratio is not None %}
-                        {% widthratio snapshot.avg_upvote_ratio 1 100 %}%
-                    {% endif %}
+        <div class="terminal-table-container">
+            <div class="terminal-table">
+                <!-- Header Row -->
+                <div class="table-header">
+                    <div class="header-prompt"></div>
+                    <a href="?sort_by=date_created&order={% if current_sort == 'date_created' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
+                        Date
+                        {% if current_sort == 'date_created' %}
+                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                        {% endif %}
+                    </a>
+                    <div class="header-stats">
+                        <a href="?sort_by=subscribers_count&order={% if current_sort == 'subscribers_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-subscribers">
+                            Subscribers
+                            {% if current_sort == 'subscribers_count' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=posts_count&order={% if current_sort == 'posts_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-posts">
+                            Posts
+                            {% if current_sort == 'posts_count' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=avg_upvote_ratio&order={% if current_sort == 'avg_upvote_ratio' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-upvote">
+                            Upvote %
+                            {% if current_sort == 'avg_upvote_ratio' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=avg_post_score&order={% if current_sort == 'avg_post_score' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-score">
+                            Avg Score
+                            {% if current_sort == 'avg_post_score' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=total_comments&order={% if current_sort == 'total_comments' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-comments">
+                            Comments
+                            {% if current_sort == 'total_comments' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                    </div>
                 </div>
-                <div>{{ snapshot.avg_post_score|floatformat:0|intcomma }}</div>
-                <div>{{ snapshot.total_comments|default_if_none:""|intcomma }}</div>
+                
+                <!-- Data Rows -->
+                {% for snapshot in page_obj %}
+                    <div class="table-row">
+                        <span class="row-prompt">$</span>
+                        <div class="row-name">{{ snapshot.date_created|date:"Y-m-d" }}</div>
+                        <div class="row-stats">
+                            <div class="stat-value stat-subscribers">
+                                {{ snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
+                            </div>
+                            <div class="stat-value stat-posts">
+                                {{ snapshot.posts_count|default_if_none:"N/A"|intcomma }}
+                            </div>
+                            <div class="stat-value stat-upvote">
+                                {% if snapshot.avg_upvote_ratio is not None %}
+                                    {% widthratio snapshot.avg_upvote_ratio 1 100 %}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                            <div class="stat-value stat-score">
+                                {{ snapshot.avg_post_score|default_if_none:"N/A"|floatformat:0|intcomma }}
+                            </div>
+                            <div class="stat-value stat-comments">
+                                {{ snapshot.total_comments|default_if_none:"N/A"|intcomma }}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <p>No snapshots yet.</p>
+                    </div>
+                {% endfor %}
             </div>
-            {% empty %}
-            <div class="empty-state">
-                <p>No snapshots yet.</p>
-            </div>
-            {% endfor %}
         </div>
         
         <!-- Pagination -->
