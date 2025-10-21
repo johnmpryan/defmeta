@@ -13,7 +13,7 @@
     }
     
     .header-stats {
-        grid-template-columns: 110px 90px 110px 100px 120px;
+        grid-template-columns: 130px 90px 110px 100px 120px;
     }
     
     .table-row {
@@ -21,7 +21,7 @@
     }
     
     .row-stats {
-        grid-template-columns: 110px 90px 110px 100px 120px;
+        grid-template-columns: 130px 90px 110px 100px 120px;
     }
     
     /* ===== RESPONSIVE: MOBILE ===== */
@@ -55,24 +55,19 @@
         }
     }
     
-    /* Very small mobile: Tighten spacing */
+    /* Very small mobile: Keep same column width as tablet */
     @media (max-width: 480px) {
         .table-header {
-            grid-template-columns: 20px 1fr 100px;
+            grid-template-columns: 20px 1fr 140px;
             gap: 10px;
         }
         
         .table-row {
-            grid-template-columns: 20px 1fr 100px;
+            grid-template-columns: 20px 1fr 140px;
             gap: 10px;
         }
         
         .row-name {
-            font-size: 14px;
-        }
-        
-        .header-name,
-        .header-cell {
             font-size: 14px;
         }
     }
