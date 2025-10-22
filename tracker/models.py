@@ -42,6 +42,7 @@ class Post(models.Model):
     reddit_id = models.CharField(max_length=20, unique=True)
     title = models.TextField()
     author = models.CharField(max_length=100)
+    body = models.TextField(null=True, blank=True)  # or 'selftext' to match Reddit's naming
     
     # Timestamp fields
     created_utc = models.DateTimeField()  # UTC timestamp from Reddit
