@@ -12,10 +12,33 @@ from logger_config import setup_logger
 
 logger = setup_logger(__name__)
 
+def calculate_estimated_votes(score, upvote_ratio):
+    """
+    Calculate estimated upvotes and downvotes from score and upvote_ratio.
+    
+    Returns tuple of (estimated_upvotes, estimated_downvotes) or (None, None) if cannot calculate.
+    """
+    # Check if we can calculate (avoiding division by zero)
+    if score is None or upvote_ratio is None or upvote_ratio == 0.5:
+        return None, None
+    
+    try:
+        # Calculate total votes using the formula
+        total_votes = score / (2 * upvote_ratio - 1)
+        
+        # Calculate estimated upvotes and downvotes
+        estimated_upvotes = round(total_votes * upvote_ratio)
+        estimated_downvotes = round(total_votes * (1 - upvote_ratio))
+        
+        return estimated_upvotes, estimated_downvotes
+    except (ZeroDivisionError, ValueError) as e:
+        logger.warning(f"Could not calculate votes - score: {score}, ratio: {upvote_ratio}, error: {e}")
+        return None, None
+
 def collect_engagement_for_three_day_old_posts():
     """
     Collect engagement metrics for posts that are 3 days old.
-    Updates score, upvote_ratio, and num_comments.
+    Updates score, upvote_ratio, num_comments, and calculated vote estimates.
     """
     reddit = get_reddit_client()
     
@@ -57,6 +80,12 @@ def collect_engagement_for_three_day_old_posts():
                     post.score = submission.score
                     post.upvote_ratio = submission.upvote_ratio
                     post.num_comments = submission.num_comments
+                    
+                    # Calculate estimated votes
+                    est_up, est_down = calculate_estimated_votes(submission.score, submission.upvote_ratio)
+                    post.estimated_upvotes = est_up
+                    post.estimated_downvotes = est_down
+                    
                     post.engagement_collected = True
                     post.save()
                     
@@ -68,6 +97,8 @@ def collect_engagement_for_three_day_old_posts():
                     post.engagement_collected = True
                     post.score = 0  # Set to 0 for removed posts
                     post.num_comments = 0
+                    post.estimated_upvotes = 0
+                    post.estimated_downvotes = 0
                     post.save()
                     
                     removed_count += 1
