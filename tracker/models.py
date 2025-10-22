@@ -68,6 +68,10 @@ class Post(models.Model):
     is_removed = models.BooleanField(default=False)
     engagement_collected = models.BooleanField(default=False)
     
+    # Estimated vote fields (calculated from score and upvote_ratio)
+    estimated_upvotes = models.IntegerField(null=True, blank=True)
+    estimated_downvotes = models.IntegerField(null=True, blank=True)
+    
     # Django timestamps
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
