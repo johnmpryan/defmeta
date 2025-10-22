@@ -184,8 +184,8 @@ def main():
     # Or comment out and use backfill_all_historical() instead
     
     # Option 1: Specific date range
-    start_date = "2025-10-06"  
-    end_date = "2025-10-20"
+    start_date = "2025-10-12"  
+    end_date = "2025-10-13"
     get_posts_for_date_range(start_date, end_date)
     
     # Option 2: Backfill based on existing snapshots
