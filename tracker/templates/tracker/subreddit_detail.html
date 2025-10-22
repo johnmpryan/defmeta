@@ -13,7 +13,7 @@
     }
     
     .header-stats {
-        grid-template-columns: 130px 90px 110px 100px 120px;
+        grid-template-columns: 130px 90px 120px 100px;
     }
     
     .table-row {
@@ -21,7 +21,7 @@
     }
     
     .row-stats {
-        grid-template-columns: 130px 90px 110px 100px 120px;
+        grid-template-columns: 130px 90px 120px 100px;
     }
     
     /* ===== RESPONSIVE: MOBILE ===== */
@@ -116,21 +116,15 @@
                                 <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
                             {% endif %}
                         </a>
-                        <a href="?sort_by=avg_upvote_ratio&order={% if current_sort == 'avg_upvote_ratio' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-upvote">
-                            Upvote %
-                            {% if current_sort == 'avg_upvote_ratio' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <a href="?sort_by=avg_post_score&order={% if current_sort == 'avg_post_score' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-score">
-                            Avg Score
-                            {% if current_sort == 'avg_post_score' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
                         <a href="?sort_by=total_comments&order={% if current_sort == 'total_comments' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-comments">
                             Comments
                             {% if current_sort == 'total_comments' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=total_estimated_upvotes&order={% if current_sort == 'total_estimated_upvotes' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-upvotes">
+                            Up
+                            {% if current_sort == 'total_estimated_upvotes' %}
                                 <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
                             {% endif %}
                         </a>
@@ -149,18 +143,11 @@
                             <div class="stat-value stat-posts">
                                 {{ snapshot.posts_count|default_if_none:"N/A"|intcomma }}
                             </div>
-                            <div class="stat-value stat-upvote">
-                                {% if snapshot.avg_upvote_ratio is not None %}
-                                    {% widthratio snapshot.avg_upvote_ratio 1 100 %}%
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </div>
-                            <div class="stat-value stat-score">
-                                {{ snapshot.avg_post_score|default_if_none:"N/A"|floatformat:0|intcomma }}
-                            </div>
                             <div class="stat-value stat-comments">
                                 {{ snapshot.total_comments|default_if_none:"N/A"|intcomma }}
+                            </div>
+                            <div class="stat-value stat-upvotes">
+                                {{ snapshot.total_estimated_upvotes|default_if_none:"N/A"|intcomma }}
                             </div>
                         </div>
                     </div>
