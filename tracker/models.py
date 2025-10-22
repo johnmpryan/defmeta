@@ -29,6 +29,10 @@ class SubredditDailyStats(models.Model):
     avg_upvote_ratio = models.FloatField(null=True, blank=True)
     total_comments = models.IntegerField(null=True, blank=True)
     engagement_collected = models.BooleanField(default=False)  # Track if we've collected this yet
+    
+    # Total vote fields (aggregated from Post table)
+    total_estimated_upvotes = models.IntegerField(null=True, blank=True)
+    total_estimated_downvotes = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'subreddits_daily_stats'
