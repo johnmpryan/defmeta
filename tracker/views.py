@@ -93,7 +93,7 @@ def homepage(request):
         chart_output = "No data available for chart"
     
     # Paginate (25 per page)
-    paginator = Paginator(subreddit_data, 25)
+    paginator = Paginator(subreddit_data, 51)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
