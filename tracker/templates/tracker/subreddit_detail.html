@@ -82,11 +82,11 @@
             <li class="breadcrumb-item active" aria-current="page">r/{{ subreddit.name }}</li>
         </ol>
     </nav>
-
+    <p class="description">Listed below are the current snapshots on recorded. Engagement data is populated 3 days after snapshot created.</p>
     <div class="section-header">r/{{ subreddit.name }}</div>
     
     {% if subreddit.subreddit_description %}
-    <p class="description">{{ subreddit.subreddit_description }}</p>
+    <p class=description>Subreddit Description: {{ subreddit.subreddit_description }}</p>
     {% endif %}
 
     <div class="section-header" style="margin-top: 40px;">SNAPSHOT HISTORY</div>
