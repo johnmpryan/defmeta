@@ -7,8 +7,8 @@ from datetime import datetime, UTC
 def homepage(request):
     """Homepage with tabbed DATA/ANALYSIS view"""
     # Get sorting parameters
-    sort_by = request.GET.get('sort_by', 'name')  # Default sort by name
-    order = request.GET.get('order', 'asc')  # Default ascending
+    sort_by = request.GET.get('sort_by', 'subscribers')  # Default sort by name
+    order = request.GET.get('order', 'desc')  # Default ascending
     
     # Get all subreddits
     subreddits = Subreddit.objects.all()
@@ -19,10 +19,17 @@ def homepage(request):
         latest_snapshot = subreddit.subredditdailystats_set.order_by('-date_created').first()
         snapshot_count = subreddit.subredditdailystats_set.count()
         
+        # Calculate subscribers per capita (per 10,000 people)
+        per_capita = None
+        if (subreddit.population and subreddit.population > 0 and 
+            latest_snapshot and latest_snapshot.subscribers_count):
+            per_capita = (latest_snapshot.subscribers_count / subreddit.population) * 10000
+        
         subreddit_data.append({
             'subreddit': subreddit,
             'latest_snapshot': latest_snapshot,
             'snapshot_count': snapshot_count,
+            'per_capita': per_capita,
         })
     
     # Apply sorting
@@ -45,6 +52,10 @@ def homepage(request):
     elif sort_by == 'latest_snapshot':
         subreddit_data.sort(
             key=lambda x: x['latest_snapshot'].date_created if x['latest_snapshot'] else datetime.min.replace(tzinfo=UTC)
+        )
+    elif sort_by == 'per_capita':
+        subreddit_data.sort(
+            key=lambda x: x['per_capita'] if x['per_capita'] else 0
         )
     
     # Reverse if descending order
