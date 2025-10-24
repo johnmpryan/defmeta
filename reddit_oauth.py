@@ -1,12 +1,15 @@
 import praw
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_reddit_client():
     """Create and return authenticated Reddit client."""
     reddit = praw.Reddit(
-        client_id=os.environ.get('REDDIT_CLIENT_ID', '4sT2zBYhcKpAKFLt5u7oGA'),
-        client_secret=os.environ.get('REDDIT_CLIENT_SECRET', 'WBF4KirnHrVSWQFB4VWn64iYZpMSfQ'),
-        user_agent='SubredditStats/1.0 by goddamn2fa'  # Change YourUsername
+        client_id=os.environ.get('REDDIT_CLIENT_ID'),
+        client_secret=os.environ.get('REDDIT_CLIENT_SECRET'),
+        user_agent=os.environ.get('REDDIT_USER_AGENT')
     )
     return reddit
 
