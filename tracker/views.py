@@ -4,6 +4,7 @@ from tracker.models import Subreddit, SubredditDailyStats, Post
 from django.db.models import Count, OuterRef, Subquery
 from django.db.models.functions import TruncDate
 from datetime import datetime, UTC, timedelta
+import json
 
 def homepage(request):
     """Homepage with tabbed DATA/ANALYSIS view"""
@@ -120,7 +121,7 @@ def homepage(request):
     return render(request, 'tracker/homepage.html', context)
 
 def subreddit_detail(request, subreddit_name):
-    """Display detail page for a specific subreddit with snapshot history."""
+    """Display detail page for a specific subreddit with snapshot history and charts."""
     # Get sort parameters from URL (default: date_created, desc)
     sort_by = request.GET.get('sort_by', 'date_created')
     order = request.GET.get('order', 'desc')
@@ -142,11 +143,36 @@ def subreddit_detail(request, subreddit_name):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # === CHART DATA PREPARATION (NEW) ===
+    # Get all snapshots ordered by date (oldest first for the chart)
+    all_snapshots = SubredditDailyStats.objects.filter(
+        subreddit=subreddit,
+        subscribers_count__isnull=False  # Only include snapshots with subscriber data
+    ).order_by('date_created')
+    
+    # Build chart data as JSON
+    chart_labels = []
+    chart_data_values = []
+    
+    for snapshot in all_snapshots:
+        # Format date as YYYY-MM-DD
+        chart_labels.append(snapshot.date_created.strftime('%Y-%m-%d'))
+        chart_data_values.append(snapshot.subscribers_count)
+    
+    # Create chart data dictionary and convert to JSON
+    chart_data = {
+        'labels': chart_labels,
+        'data': chart_data_values
+    }
+    chart_data_json = json.dumps(chart_data)
+    # === END CHART DATA PREPARATION ===
+    
     return render(request, 'tracker/subreddit_detail.html', {
         'subreddit': subreddit,
         'page_obj': page_obj,
         'current_sort': sort_by,
-        'current_order': order
+        'current_order': order,
+        'chart_data': chart_data_json  # NEW: Pass JSON to template
     })
 
 def post_list(request, subreddit_name, date):

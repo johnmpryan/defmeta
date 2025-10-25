@@ -5,6 +5,54 @@
 
 {% block extra_css %}
 <style>
+    /* ===== TAB NAVIGATION ===== */
+    .tab-container {
+        display: flex;
+        gap: 0;
+        margin-bottom: 0;
+        border-bottom: 2px solid #2a662a;
+    }
+    
+    .tab-button {
+        background: #1a1a1a;
+        color: #888;
+        border: 2px solid #2a662a;
+        border-bottom: none;
+        padding: 10px 30px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .tab-button:hover {
+        background: #252525;
+        color: #00FF00;
+    }
+    
+    .tab-button.active {
+        background: #252525;
+        color: #00FF00;
+        border-bottom: 2px solid #252525;
+        margin-bottom: -2px;
+    }
+    
+    .tab-content {
+        display: none;
+        padding: 30px;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+
+    /* ===== CHART STYLING ===== */
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 20px 0;
+    }
+
     /* ===== DETAIL PAGE TABLE LAYOUT ===== */
     
     /* Desktop: prompt (25px) + date (140px) + 5 stat columns with specific widths */
@@ -22,17 +70,6 @@
     
     .row-stats {
         grid-template-columns: 130px 90px 120px 100px;
-    }
-    
-    /* Make date clickable */
-    .row-date {
-        color: #00FF00;
-        text-decoration: underline;
-        cursor: pointer;
-    }
-    
-    .row-date:hover {
-        opacity: 0.8;
     }
     
     /* ===== RESPONSIVE: MOBILE ===== */
@@ -81,6 +118,11 @@
         .row-name {
             font-size: 14px;
         }
+
+        .tab-button {
+            padding: 8px 20px;
+            font-size: 12px;
+        }
     }
 </style>
 {% endblock %}
@@ -93,106 +135,246 @@
             <li class="breadcrumb-item active" aria-current="page">r/{{ subreddit.name }}</li>
         </ol>
     </nav>
-    <p class="description">Below are the current snapshots for r/{{ subreddit.name}}. Engagement data is populated 3 days after snapshot created.</p>
+    
     <div class="section-header">r/{{ subreddit.name }}</div>
     
     {% if subreddit.subreddit_description %}
-    <p class=description>Subreddit Description: {{ subreddit.subreddit_description }}</p>
+    <p class="description">{{ subreddit.subreddit_description }}</p>
     {% endif %}
 
-    <div class="section-header" style="margin-top: 40px;">SNAPSHOT HISTORY</div>
-    
-    {% if page_obj %}
-        <div class="terminal-table-container">
-            <div class="terminal-table">
-                <!-- Header Row -->
-                <div class="table-header">
-                    <div class="header-prompt"></div>
-                    <a href="?sort_by=date_created&order={% if current_sort == 'date_created' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
-                        Date
-                        {% if current_sort == 'date_created' %}
-                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                        {% endif %}
-                    </a>
-                    <div class="header-stats">
-                        <a href="?sort_by=subscribers_count&order={% if current_sort == 'subscribers_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-subscribers">
-                            Subscribers
-                            {% if current_sort == 'subscribers_count' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <a href="?sort_by=posts_count&order={% if current_sort == 'posts_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-posts">
-                            Posts
-                            {% if current_sort == 'posts_count' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <a href="?sort_by=total_comments&order={% if current_sort == 'total_comments' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-comments">
-                            Comments
-                            {% if current_sort == 'total_comments' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <a href="?sort_by=total_estimated_upvotes&order={% if current_sort == 'total_estimated_upvotes' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-upvotes">
-                            Upvotes
-                            {% if current_sort == 'total_estimated_upvotes' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Data Rows -->
-                {% for snapshot in page_obj %}
-                    <div class="table-row">
-                        <span class="row-prompt">$</span>
-                        <a href="/r/{{ subreddit.name }}/posts/{{ snapshot.date_created|date:'Y-m-d' }}/" class="row-date">
-                            {{ snapshot.date_created|date:"Y-m-d" }}
-                        </a>
-                        <div class="row-stats">
-                            <div class="stat-value stat-subscribers">
-                                {{ snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
-                            </div>
-                            <div class="stat-value stat-posts">
-                                {{ snapshot.posts_count|default_if_none:"N/A"|intcomma }}
-                            </div>
-                            <div class="stat-value stat-comments">
-                                {{ snapshot.total_comments|default_if_none:"N/A"|intcomma }}
-                            </div>
-                            <div class="stat-value stat-upvotes">
-                                {{ snapshot.total_estimated_upvotes|default_if_none:"N/A"|intcomma }}
-                            </div>
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="empty-state">
-                        <p>No snapshots yet.</p>
-                    </div>
-                {% endfor %}
-            </div>
+    <!-- Tab Navigation -->
+    <div class="terminal-table-container" style="margin-top: 40px;">
+        <div class="tab-container">
+            <button class="tab-button active" onclick="switchTab('data')">DATA</button>
+            <button class="tab-button" onclick="switchTab('charts')">CHARTS</button>
         </div>
         
-        <!-- Pagination -->
-        {% if page_obj.has_other_pages %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
-            {% else %}
-                <span class="page-btn disabled">← Previous</span>
-            {% endif %}
+        <!-- DATA Tab Content -->
+        <div id="data-tab" class="tab-content active">
+            <p class="description">Snapshot history for r/{{ subreddit.name }}. Engagement data is populated 3 days after snapshot created.</p>
             
-            <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
+            {% if page_obj %}
+                <div class="terminal-table">
+                    <!-- Header Row -->
+                    <div class="table-header">
+                        <div class="header-prompt"></div>
+                        <a href="?sort_by=date_created&order={% if current_sort == 'date_created' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
+                            Date
+                            {% if current_sort == 'date_created' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <div class="header-stats">
+                            <a href="?sort_by=subscribers_count&order={% if current_sort == 'subscribers_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-subscribers">
+                                Subscribers
+                                {% if current_sort == 'subscribers_count' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=posts_count&order={% if current_sort == 'posts_count' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-posts">
+                                Posts
+                                {% if current_sort == 'posts_count' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=total_comments&order={% if current_sort == 'total_comments' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-comments">
+                                Comments
+                                {% if current_sort == 'total_comments' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=total_estimated_upvotes&order={% if current_sort == 'total_estimated_upvotes' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-upvotes">
+                                Upvotes
+                                {% if current_sort == 'total_estimated_upvotes' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Rows -->
+                    {% for snapshot in page_obj %}
+                        <div class="table-row">
+                            <span class="row-prompt">$</span>
+                            <div class="row-name">{{ snapshot.date_created|date:"Y-m-d" }}</div>
+                            <div class="row-stats">
+                                <div class="stat-value stat-subscribers">
+                                    {{ snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
+                                </div>
+                                <div class="stat-value stat-posts">
+                                    {{ snapshot.posts_count|default_if_none:"N/A"|intcomma }}
+                                </div>
+                                <div class="stat-value stat-comments">
+                                    {{ snapshot.total_comments|default_if_none:"N/A"|intcomma }}
+                                </div>
+                                <div class="stat-value stat-upvotes">
+                                    {{ snapshot.total_estimated_upvotes|default_if_none:"N/A"|intcomma }}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <p>No snapshots yet.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?sort_by={{ current_sort }}&order={{ current_order }}&page={{ page_obj.previous_page_number }}" class="page-btn">← Previous</a>
+                    {% else %}
+                        <span class="page-btn disabled">← Previous</span>
+                    {% endif %}
+                    
+                    <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?sort_by={{ current_sort }}&order={{ current_order }}&page={{ page_obj.next_page_number }}" class="page-btn">Next →</a>
+                    {% else %}
+                        <span class="page-btn disabled">Next →</span>
+                    {% endif %}
+                </div>
+                {% endif %}
             {% else %}
-                <span class="page-btn disabled">Next →</span>
+                <div class="empty-state">
+                    <p>No snapshot data available yet.</p>
+                </div>
             {% endif %}
         </div>
-        {% endif %}
-    {% else %}
-        <div class="empty-state">
-            <p>No snapshot data available yet.</p>
+        
+        <!-- CHARTS Tab Content -->
+        <div id="charts-tab" class="tab-content">
+            <h2 style="color: #00FF00; margin-bottom: 20px;">Subscriber Growth</h2>
+            <div class="chart-container">
+                <canvas id="subscriberChart"></canvas>
+            </div>
         </div>
-    {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tab switching function
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active state from all buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName + '-tab').classList.add('active');
+    
+    // Activate clicked button
+    event.target.classList.add('active');
+}
+
+// Chart.js configuration for terminal aesthetic
+Chart.defaults.color = '#00FF00';  // All text green
+Chart.defaults.borderColor = '#2a662a';  // Grid lines muted green
+
+// Subscriber chart data from Django
+const chartData = {{ chart_data|safe }};
+
+// Create the chart
+const ctx = document.getElementById('subscriberChart').getContext('2d');
+const subscriberChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: chartData.labels,  // Dates
+        datasets: [{
+            label: 'Subscribers',
+            data: chartData.data,  // Subscriber counts
+            borderColor: '#00FF00',
+            backgroundColor: 'rgba(0, 255, 0, 0.1)',
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: '#00FF00',
+            pointBorderColor: '#00FF00',
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#00FF00',
+            pointHoverBorderColor: '#1a1a1a',
+            tension: 0.1  // Slight curve
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                labels: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: '#252525',
+                titleColor: '#00FF00',
+                bodyColor: '#00FF00',
+                borderColor: '#2a662a',
+                borderWidth: 1,
+                titleFont: {
+                    family: "'Courier New', monospace"
+                },
+                bodyFont: {
+                    family: "'Courier New', monospace"
+                },
+                callbacks: {
+                    // Format tooltip with commas
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += context.parsed.y.toLocaleString();
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 11
+                    }
+                }
+            },
+            y: {
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 11
+                    },
+                    // Format y-axis with commas
+                    callback: function(value) {
+                        return value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
 {% endblock %}
