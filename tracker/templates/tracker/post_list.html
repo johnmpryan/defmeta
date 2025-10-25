@@ -1,0 +1,205 @@
+{% extends 'tracker/base.html' %}
+{% load humanize %}
+
+{% block title %}Posts - r/{{ subreddit.name }} - {{ formatted_date }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== POST LIST PAGE TABLE LAYOUT ===== */
+    
+    /* Desktop: prompt (25px) + title (flexible) + 4 stat columns */
+    .table-header {
+        grid-template-columns: 25px 1fr 320px;
+    }
+    
+    .header-stats {
+        grid-template-columns: 100px 70px 70px 60px;
+        gap: 10px;
+    }
+    
+    .table-row {
+        grid-template-columns: 25px 1fr 320px;
+    }
+    
+    .row-stats {
+        grid-template-columns: 100px 70px 70px 60px;
+        gap: 10px;
+    }
+    
+    /* Title cell with wrapping */
+    .post-title {
+        color: #00FF00;
+        text-decoration: underline;
+        cursor: default;
+        line-height: 1.4;
+        padding-right: 10px;
+    }
+    
+    .post-title:hover {
+        opacity: 0.8;
+    }
+    
+    /* Removed post styling */
+    .post-title.removed {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
+    
+    /* ===== RESPONSIVE: MOBILE ===== */
+    
+    /* Tablet/Mobile: Show only title and score */
+    @media (max-width: 768px) {
+        .table-header {
+            grid-template-columns: 25px 1fr 70px;
+        }
+        
+        .header-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        /* Hide all stats except score in header */
+        .header-stats .header-cell:not(.header-score) {
+            display: none;
+        }
+        
+        .table-row {
+            grid-template-columns: 25px 1fr 70px;
+        }
+        
+        .row-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        /* Hide all stats except score in rows */
+        .row-stats .stat-value:not(.stat-score) {
+            display: none;
+        }
+    }
+    
+    /* Very small mobile: Keep same structure */
+    @media (max-width: 480px) {
+        .table-header {
+            grid-template-columns: 20px 1fr 70px;
+            gap: 10px;
+        }
+        
+        .table-row {
+            grid-template-columns: 20px 1fr 70px;
+            gap: 10px;
+        }
+        
+        .post-title {
+            font-size: 14px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/r/{{ subreddit.name }}/">r/{{ subreddit.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ formatted_date }}</li>
+        </ol>
+    </nav>
+    
+    <p class="description">Posts from r/{{ subreddit.name }} on {{ formatted_date }}</p>
+    
+    <div class="section-header">POSTS - {{ formatted_date|upper }}</div>
+    
+    {% if page_obj %}
+        <div class="terminal-table-container">
+            <div class="terminal-table">
+                <!-- Header Row -->
+                <div class="table-header">
+                    <div class="header-prompt"></div>
+                    <a href="?sort_by=title&order={% if current_sort == 'title' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
+                        Title
+                        {% if current_sort == 'title' %}
+                            <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                        {% endif %}
+                    </a>
+                    <div class="header-stats">
+                        <a href="?sort_by=num_comments&order={% if current_sort == 'num_comments' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-comments">
+                            Comments
+                            {% if current_sort == 'num_comments' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=score&order={% if current_sort == 'score' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-score">
+                            Score
+                            {% if current_sort == 'score' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=estimated_upvotes&order={% if current_sort == 'estimated_upvotes' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-up">
+                            Up
+                            {% if current_sort == 'estimated_upvotes' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <a href="?sort_by=estimated_downvotes&order={% if current_sort == 'estimated_downvotes' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-down">
+                            Down
+                            {% if current_sort == 'estimated_downvotes' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Data Rows -->
+                {% for post in page_obj %}
+                    <div class="table-row">
+                        <span class="row-prompt">$</span>
+                        <div class="post-title {% if post.is_removed %}removed{% endif %}">
+                            {{ post.title }}
+                        </div>
+                        <div class="row-stats">
+                            <div class="stat-value stat-comments">
+                                {{ post.num_comments|default_if_none:"N/A"|intcomma }}
+                            </div>
+                            <div class="stat-value stat-score">
+                                {{ post.score|default_if_none:"N/A"|intcomma }}
+                            </div>
+                            <div class="stat-value stat-up">
+                                {{ post.estimated_upvotes|default_if_none:"N/A"|intcomma }}
+                            </div>
+                            <div class="stat-value stat-down">
+                                {{ post.estimated_downvotes|default_if_none:"N/A"|intcomma }}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <p>No posts from this date.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
+            {% else %}
+                <span class="page-btn disabled">← Previous</span>
+            {% endif %}
+            
+            <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
+            {% else %}
+                <span class="page-btn disabled">Next →</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <p>No posts from this date.</p>
+        </div>
+    {% endif %}
+{% endblock %}

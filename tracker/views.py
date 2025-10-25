@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from tracker.models import Subreddit, SubredditDailyStats
+from tracker.models import Subreddit, SubredditDailyStats, Post
 from django.db.models import Count, OuterRef, Subquery
-from datetime import datetime, UTC
+from django.db.models.functions import TruncDate
+from datetime import datetime, UTC, timedelta
 
 def homepage(request):
     """Homepage with tabbed DATA/ANALYSIS view"""
@@ -143,6 +144,50 @@ def subreddit_detail(request, subreddit_name):
     
     return render(request, 'tracker/subreddit_detail.html', {
         'subreddit': subreddit,
+        'page_obj': page_obj,
+        'current_sort': sort_by,
+        'current_order': order
+    })
+
+def post_list(request, subreddit_name, date):
+    """Display posts for a specific subreddit on a specific date."""
+    
+    # Get sort parameters from URL (default: score, desc)
+    sort_by = request.GET.get('sort_by', 'score')
+    order = request.GET.get('order', 'desc')
+    
+    # Get the subreddit or return 404 if not found
+    subreddit = get_object_or_404(Subreddit, name=subreddit_name)
+    
+    # Parse the date string (YYYY-MM-DD) or return 404 if invalid
+    try:
+        parsed_date = datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        from django.http import Http404
+        raise Http404("Invalid date format")
+    
+    # Build the order_by clause
+    order_prefix = '-' if order == 'desc' else ''
+    order_clause = f"{order_prefix}{sort_by}"
+    
+    # Get all posts for this subreddit on this date with sorting
+    posts = Post.objects.filter(
+        subreddit=subreddit,
+        created_local__date=parsed_date
+    ).order_by(order_clause)
+    
+    # Format date for breadcrumb (e.g., "Wednesday, 10/22")
+    formatted_date = parsed_date.strftime('%A, %m/%d')
+    
+    # Paginate - 10 per page
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'tracker/post_list.html', {
+        'subreddit': subreddit,
+        'date': date,  # Keep original format for URLs
+        'formatted_date': formatted_date,  # For display
         'page_obj': page_obj,
         'current_sort': sort_by,
         'current_order': order

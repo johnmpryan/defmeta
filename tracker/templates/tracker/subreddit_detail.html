@@ -24,6 +24,17 @@
         grid-template-columns: 130px 90px 120px 100px;
     }
     
+    /* Make date clickable */
+    .row-date {
+        color: #00FF00;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+    
+    .row-date:hover {
+        opacity: 0.8;
+    }
+    
     /* ===== RESPONSIVE: MOBILE ===== */
     
     /* Tablet/Mobile: Show only date and subscribers */
@@ -135,7 +146,9 @@
                 {% for snapshot in page_obj %}
                     <div class="table-row">
                         <span class="row-prompt">$</span>
-                        <div class="row-name">{{ snapshot.date_created|date:"Y-m-d" }}</div>
+                        <a href="/r/{{ subreddit.name }}/posts/{{ snapshot.date_created|date:'Y-m-d' }}/" class="row-date">
+                            {{ snapshot.date_created|date:"Y-m-d" }}
+                        </a>
                         <div class="row-stats">
                             <div class="stat-value stat-subscribers">
                                 {{ snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
