@@ -47,13 +47,9 @@
     }
     
     /* ===== CHART STYLING ===== */
-    .chart-display {
-        color: #00FF00;
-        font-family: 'Courier New', monospace;
-        font-size: 11px;
-        line-height: 1.2;
-        overflow-x: auto;
-        white-space: pre;
+    .chart-container {
+        position: relative;
+        height: 400px;
         margin: 20px 0;
     }
     
@@ -147,7 +143,7 @@
     <div class="terminal-table-container" style="margin-top: 30px;">
         <div class="tab-container">
             <button class="tab-button active" onclick="switchTab('data')">DATA</button>
-            <button class="tab-button" onclick="switchTab('analysis')">ANALYSIS</button>
+            <button class="tab-button" onclick="switchTab('charts')">CHARTS</button>
         </div>
         
         <!-- DATA Tab Content -->
@@ -244,10 +240,12 @@
             {% endif %}
         </div>
         
-        <!-- ANALYSIS Tab Content -->
-        <div id="analysis-tab" class="tab-content">
-            <h2>State Subreddits by Subscriber Count</h2>
-            <pre class="chart-display">{{ chart }}</pre>
+        <!-- CHARTS Tab Content -->
+        <div id="charts-tab" class="tab-content">
+            <h2 style="color: #00FF00; margin-bottom: 20px;">Total Subscribers Across All State Subreddits</h2>
+            <div class="chart-container">
+                <canvas id="totalSubscribersChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -269,5 +267,105 @@ function switchTab(tabName) {
     // Activate clicked button
     event.target.classList.add('active');
 }
+
+// Chart.js configuration for terminal aesthetic
+Chart.defaults.color = '#00FF00';
+Chart.defaults.borderColor = '#2a662a';
+
+// Chart data from Django
+const chartData = {{ chart_data|safe }};
+
+// Create the chart
+const ctx = document.getElementById('totalSubscribersChart').getContext('2d');
+const totalSubscribersChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: chartData.labels,
+        datasets: [{
+            label: 'Total Subscribers',
+            data: chartData.data,
+            borderColor: '#00FF00',
+            backgroundColor: 'rgba(0, 255, 0, 0.1)',
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: '#00FF00',
+            pointBorderColor: '#00FF00',
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#00FF00',
+            pointHoverBorderColor: '#1a1a1a',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                labels: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: '#252525',
+                titleColor: '#00FF00',
+                bodyColor: '#00FF00',
+                borderColor: '#2a662a',
+                borderWidth: 1,
+                titleFont: {
+                    family: "'Courier New', monospace"
+                },
+                bodyFont: {
+                    family: "'Courier New', monospace"
+                },
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += context.parsed.y.toLocaleString();
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 11
+                    }
+                }
+            },
+            y: {
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 11
+                    },
+                    callback: function(value) {
+                        return value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
 </script>
 {% endblock %}

@@ -1,16 +1,16 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from tracker.models import Subreddit, SubredditDailyStats, Post
-from django.db.models import Count, OuterRef, Subquery
+from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from datetime import datetime, UTC, timedelta
 import json
 
 def homepage(request):
-    """Homepage with tabbed DATA/ANALYSIS view"""
+    """Homepage with tabbed DATA/CHARTS view"""
     # Get sorting parameters
-    sort_by = request.GET.get('sort_by', 'subscribers')  # Default sort by name
-    order = request.GET.get('order', 'desc')  # Default ascending
+    sort_by = request.GET.get('sort_by', 'subscribers')
+    order = request.GET.get('order', 'desc')
     
     # Get all subreddits
     subreddits = Subreddit.objects.all()
@@ -64,48 +64,34 @@ def homepage(request):
     if order == 'desc':
         subreddit_data.reverse()
     
-    # Generate ASCII chart for ANALYSIS tab
-    chart_data = []
-    for item in subreddit_data:
-        if item['latest_snapshot'] and item['latest_snapshot'].subscribers_count:
-            chart_data.append({
-                'name': item['subreddit'].name,
-                'subscribers': item['latest_snapshot'].subscribers_count
-            })
+    # === CHART DATA PREPARATION FOR CHARTS TAB ===
+    # Aggregate total subscribers by date across all subreddits
+    aggregated_data = SubredditDailyStats.objects.filter(
+        subscribers_count__isnull=False
+    ).extra(
+        select={'date_only': 'DATE(date_created)'}
+    ).values('date_only').annotate(
+        total_subscribers=Sum('subscribers_count')
+    ).order_by('date_only')
     
-    # Sort chart data by subscriber count (lowest to highest)
-    chart_data.sort(key=lambda x: x['subscribers'])
+    # Build chart data as JSON
+    chart_labels = []
+    chart_data_values = []
     
-    if chart_data:
-        # Find max value for scaling
-        max_subs = max(d['subscribers'] for d in chart_data)
-        
-        # Build simple ASCII bar chart
-        chart_lines = []
-        chart_lines.append("Subscriber Counts by State Subreddit")
-        chart_lines.append("=" * 80)
-        chart_lines.append("")
-        
-        # Max bar width in characters
-        max_bar_width = 50
-        
-        for item in chart_data:
-            name = item['name'].ljust(15)  # Left-justify name to 15 chars
-            count = item['subscribers']
-            
-            # Calculate bar length (proportional to subscriber count)
-            bar_length = int((count / max_subs) * max_bar_width)
-            bar = '█' * bar_length
-            
-            # Format the line
-            line = f"{name} │ {bar} {count:,}"
-            chart_lines.append(line)
-        
-        chart_output = '\n'.join(chart_lines)
-    else:
-        chart_output = "No data available for chart"
+    for item in aggregated_data:
+        # Format date as YYYY-MM-DD
+        chart_labels.append(str(item['date_only']))
+        chart_data_values.append(item['total_subscribers'])
     
-    # Paginate (25 per page)
+    # Create chart data dictionary and convert to JSON
+    chart_data = {
+        'labels': chart_labels,
+        'data': chart_data_values
+    }
+    chart_data_json = json.dumps(chart_data)
+    # === END CHART DATA PREPARATION ===
+    
+    # Paginate (51 per page)
     paginator = Paginator(subreddit_data, 51)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -115,7 +101,7 @@ def homepage(request):
         'page_obj': page_obj,
         'current_sort': sort_by,
         'current_order': order,
-        'chart': chart_output,
+        'chart_data': chart_data_json,
     }
     
     return render(request, 'tracker/homepage.html', context)
@@ -143,11 +129,11 @@ def subreddit_detail(request, subreddit_name):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # === CHART DATA PREPARATION (NEW) ===
+    # === CHART DATA PREPARATION ===
     # Get all snapshots ordered by date (oldest first for the chart)
     all_snapshots = SubredditDailyStats.objects.filter(
         subreddit=subreddit,
-        subscribers_count__isnull=False  # Only include snapshots with subscriber data
+        subscribers_count__isnull=False
     ).order_by('date_created')
     
     # Build chart data as JSON
@@ -172,7 +158,7 @@ def subreddit_detail(request, subreddit_name):
         'page_obj': page_obj,
         'current_sort': sort_by,
         'current_order': order,
-        'chart_data': chart_data_json  # NEW: Pass JSON to template
+        'chart_data': chart_data_json
     })
 
 def post_list(request, subreddit_name, date):
@@ -212,8 +198,8 @@ def post_list(request, subreddit_name, date):
     
     return render(request, 'tracker/post_list.html', {
         'subreddit': subreddit,
-        'date': date,  # Keep original format for URLs
-        'formatted_date': formatted_date,  # For display
+        'date': date,
+        'formatted_date': formatted_date,
         'page_obj': page_obj,
         'current_sort': sort_by,
         'current_order': order
