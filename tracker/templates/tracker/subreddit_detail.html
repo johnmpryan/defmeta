@@ -197,7 +197,8 @@
                     {% for snapshot in page_obj %}
                         <div class="table-row">
                             <span class="row-prompt">$</span>
-                            <div class="row-name">{{ snapshot.date_created|date:"Y-m-d" }}</div>
+
+                            <div class="row-name"><a href="/r/{{ subreddit.name }}/posts/{{ snapshot.date_created|date:'Y-m-d' }}/" class="row-name">{{ snapshot.date_created|date:"Y-m-d" }}</a></div>
                             <div class="row-stats">
                                 <div class="stat-value stat-subscribers">
                                     {{ snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
