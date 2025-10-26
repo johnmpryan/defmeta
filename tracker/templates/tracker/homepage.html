@@ -242,7 +242,12 @@
         
         <!-- CHARTS Tab Content -->
         <div id="charts-tab" class="tab-content">
-            <h2 style="color: #00FF00; margin-bottom: 20px;">Total Subscribers Across All State Subreddits</h2>
+            <h2 style="color: #00FF00; margin-bottom: 20px;">Activity vs Subscribers by State Population</h2>
+            <div class="chart-container" style="height: 600px;">
+                <canvas id="bubbleChart"></canvas>
+            </div>
+            
+            <h2 style="color: #00FF00; margin: 40px 0 20px;">Total Subscribers Across All State Subreddits</h2>
             <div class="chart-container">
                 <canvas id="totalSubscribersChart"></canvas>
             </div>
@@ -272,18 +277,17 @@ function switchTab(tabName) {
 Chart.defaults.color = '#00FF00';
 Chart.defaults.borderColor = '#2a662a';
 
-// Chart data from Django
-const chartData = {{ chart_data|safe }};
+// LINE CHART: Total Subscribers Over Time
+const lineChartData = {{ line_chart_data|safe }};
 
-// Create the chart
-const ctx = document.getElementById('totalSubscribersChart').getContext('2d');
-const totalSubscribersChart = new Chart(ctx, {
+const lineCtx = document.getElementById('totalSubscribersChart').getContext('2d');
+const totalSubscribersChart = new Chart(lineCtx, {
     type: 'line',
     data: {
-        labels: chartData.labels,
+        labels: lineChartData.labels,
         datasets: [{
             label: 'Total Subscribers',
-            data: chartData.data,
+            data: lineChartData.data,
             borderColor: '#00FF00',
             backgroundColor: 'rgba(0, 255, 0, 0.1)',
             borderWidth: 2,
@@ -358,6 +362,103 @@ const totalSubscribersChart = new Chart(ctx, {
                     font: {
                         family: "'Courier New', monospace",
                         size: 11
+                    },
+                    callback: function(value) {
+                        return value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// BUBBLE CHART: Activity vs Subscribers by State Population
+const bubbleData = {{ bubble_chart_data|safe }};
+
+const bubbleCtx = document.getElementById('bubbleChart').getContext('2d');
+const bubbleChart = new Chart(bubbleCtx, {
+    type: 'bubble',
+    data: {
+        datasets: [{
+            label: 'State Subreddits',
+            data: bubbleData,
+            backgroundColor: 'rgba(0, 255, 0, 0.2)',
+            borderColor: '#00FF00',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#252525',
+                titleColor: '#00FF00',
+                bodyColor: '#00FF00',
+                borderColor: '#2a662a',
+                borderWidth: 1,
+                titleFont: {
+                    family: "'Courier New', monospace"
+                },
+                bodyFont: {
+                    family: "'Courier New', monospace"
+                },
+                callbacks: {
+                    label: function(context) {
+                        const point = context.raw;
+                        return [
+                            `r/${point.name}`,
+                            `Subscribers: ${point.y.toLocaleString()}`,
+                            `Posts (7d): ${point.x}`,
+                            `Population: ${(point.r * 100000).toLocaleString()}`
+                        ];
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Posts in Last 7 Days',
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 14
+                    }
+                },
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace"
+                    }
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Subscribers',
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 14
+                    }
+                },
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace"
                     },
                     callback: function(value) {
                         return value.toLocaleString();

@@ -65,7 +65,8 @@ def homepage(request):
         subreddit_data.reverse()
     
     # === CHART DATA PREPARATION FOR CHARTS TAB ===
-    # Aggregate total subscribers by date across all subreddits
+    
+    # LINE CHART: Aggregate total subscribers by date across all subreddits
     aggregated_data = SubredditDailyStats.objects.filter(
         subscribers_count__isnull=False
     ).extra(
@@ -74,7 +75,7 @@ def homepage(request):
         total_subscribers=Sum('subscribers_count')
     ).order_by('date_only')
     
-    # Build chart data as JSON
+    # Build line chart data as JSON
     chart_labels = []
     chart_data_values = []
     
@@ -83,12 +84,38 @@ def homepage(request):
         chart_labels.append(str(item['date_only']))
         chart_data_values.append(item['total_subscribers'])
     
-    # Create chart data dictionary and convert to JSON
-    chart_data = {
+    # Create line chart data dictionary and convert to JSON
+    line_chart_data = {
         'labels': chart_labels,
         'data': chart_data_values
     }
-    chart_data_json = json.dumps(chart_data)
+    line_chart_data_json = json.dumps(line_chart_data)
+    
+    # BUBBLE CHART: Subscribers vs Posts (last 7 days) with Population as bubble size
+    seven_days_ago = datetime.now(UTC) - timedelta(days=7)
+    
+    bubble_data = []
+    for subreddit in subreddits:
+        # Get latest subscriber count
+        latest_snapshot = subreddit.subredditdailystats_set.order_by('-date_created').first()
+        
+        # Get post count from last 7 days
+        posts_last_week = Post.objects.filter(
+            subreddit=subreddit,
+            created_utc__gte=seven_days_ago
+        ).count()
+        
+# Only include if we have all required data
+        if latest_snapshot and latest_snapshot.subscribers_count and subreddit.population:
+            bubble_data.append({
+                'x': posts_last_week,
+                'y': latest_snapshot.subscribers_count,
+                'r': subreddit.population / 1000000,  # Scale population for bubble size
+                'name': subreddit.name,
+                'population': subreddit.population  # Add original population for tooltip
+            })
+    
+    bubble_chart_data_json = json.dumps(bubble_data)
     # === END CHART DATA PREPARATION ===
     
     # Paginate (51 per page)
@@ -101,7 +128,8 @@ def homepage(request):
         'page_obj': page_obj,
         'current_sort': sort_by,
         'current_order': order,
-        'chart_data': chart_data_json,
+        'line_chart_data': line_chart_data_json,
+        'bubble_chart_data': bubble_chart_data_json,
     }
     
     return render(request, 'tracker/homepage.html', context)
