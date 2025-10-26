@@ -242,7 +242,7 @@
         
         <!-- CHARTS Tab Content -->
         <div id="charts-tab" class="tab-content">
-            <h2 style="color: #00FF00; margin-bottom: 20px;">Activity vs Subscribers by State Population</h2>
+            <h2 style="color: #00FF00; margin-bottom: 20px;">Activity -7d vs Subscribers by State Population</h2>
             <div class="chart-container" style="height: 600px;">
                 <canvas id="bubbleChart"></canvas>
             </div>
@@ -413,7 +413,7 @@ const bubbleChart = new Chart(bubbleCtx, {
                             `r/${point.name}`,
                             `Subscribers: ${point.y.toLocaleString()}`,
                             `Posts (7d): ${point.x}`,
-                            `Population: ${(point.r * 1000000).toLocaleString()}`
+                            `Population: ${(point.r * 500000).toLocaleString()}`
                         ];
                     }
                 }
