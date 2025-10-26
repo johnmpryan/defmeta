@@ -110,7 +110,7 @@ def homepage(request):
             bubble_data.append({
                 'x': posts_last_week,
                 'y': latest_snapshot.subscribers_count,
-                'r': subreddit.population / 1000000,  # Scale population for bubble size
+                'r': subreddit.population / 500000,  # Scale population for bubble size
                 'name': subreddit.name,
                 'population': subreddit.population  # Add original population for tooltip
             })
