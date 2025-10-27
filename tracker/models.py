@@ -11,7 +11,7 @@ class Subreddit(models.Model):
     region = models.CharField(max_length=100,null=True, blank=True)
     timezone = models.CharField(max_length=100,null=True, blank=True)
     residents_over_18 = models.IntegerField(null=True, blank=True)
-    pop_density_density = models.IntegerField(null=True, blank=True)
+    pop_density = models.IntegerField(null=True, blank=True)
     
     class Meta:
         db_table = 'subreddits'
