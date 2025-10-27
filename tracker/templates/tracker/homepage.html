@@ -247,6 +247,12 @@
                 <canvas id="bubbleChart"></canvas>
             </div>
             
+            <h2 style="color: #00FF00; margin: 40px 0 20px;">Recent Post Activity vs Subscribers by Population Density</h2>
+            <p class="description">District of Columbia excluded, pop density 10x greater than next closest.<p>
+            <div class="chart-container" style="height: 600px;">
+                <canvas id="densityBubbleChart"></canvas>
+            </div>
+            
             <h2 style="color: #00FF00; margin: 40px 0 20px;">Total Subscribers Across All State Subreddits</h2>
             <div class="chart-container">
                 <canvas id="totalSubscribersChart"></canvas>
@@ -372,7 +378,7 @@ const totalSubscribersChart = new Chart(lineCtx, {
     }
 });
 
-// BUBBLE CHART: Activity vs Subscribers by State Population
+// BUBBLE CHART 1: Activity vs Subscribers by State Population
 const bubbleData = {{ bubble_chart_data|safe }};
 
 const bubbleCtx = document.getElementById('bubbleChart').getContext('2d');
@@ -413,7 +419,104 @@ const bubbleChart = new Chart(bubbleCtx, {
                             `r/${point.name}`,
                             `Subscribers: ${point.y.toLocaleString()}`,
                             `Posts (7d): ${point.x}`,
-                            `Population: ${(point.r * 500000).toLocaleString()}`
+                            `Population: ${point.population.toLocaleString()}`
+                        ];
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Posts in Last 7 Days',
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 14
+                    }
+                },
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace"
+                    }
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Subscribers',
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace",
+                        size: 14
+                    }
+                },
+                grid: {
+                    color: '#2a662a',
+                    borderColor: '#2a662a'
+                },
+                ticks: {
+                    color: '#00FF00',
+                    font: {
+                        family: "'Courier New', monospace"
+                    },
+                    callback: function(value) {
+                        return value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// BUBBLE CHART 2: Activity vs Subscribers by Population Density
+const densityBubbleData = {{ density_bubble_chart_data|safe }};
+
+const densityBubbleCtx = document.getElementById('densityBubbleChart').getContext('2d');
+const densityBubbleChart = new Chart(densityBubbleCtx, {
+    type: 'bubble',
+    data: {
+        datasets: [{
+            label: 'State Subreddits by Density',
+            data: densityBubbleData,
+            backgroundColor: 'rgba(0, 255, 0, 0.2)',
+            borderColor: '#00FF00',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#252525',
+                titleColor: '#00FF00',
+                bodyColor: '#00FF00',
+                borderColor: '#2a662a',
+                borderWidth: 1,
+                titleFont: {
+                    family: "'Courier New', monospace"
+                },
+                bodyFont: {
+                    family: "'Courier New', monospace"
+                },
+                callbacks: {
+                    label: function(context) {
+                        const point = context.raw;
+                        return [
+                            `r/${point.name}`,
+                            `Subscribers: ${point.y.toLocaleString()}`,
+                            `Posts (7d): ${point.x}`,
+                            `Pop. Density: ${point.pop_density.toLocaleString()} per sq mi`
                         ];
                     }
                 }

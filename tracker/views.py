@@ -91,7 +91,7 @@ def homepage(request):
     }
     line_chart_data_json = json.dumps(line_chart_data)
     
-    # BUBBLE CHART: Subscribers vs Posts (last 7 days) with Population as bubble size
+    # BUBBLE CHART 1: Subscribers vs Posts (last 7 days) with Population as bubble size
     seven_days_ago = datetime.now(UTC) - timedelta(days=7)
     
     bubble_data = []
@@ -105,7 +105,7 @@ def homepage(request):
             created_utc__gte=seven_days_ago
         ).count()
         
-# Only include if we have all required data
+        # Only include if we have all required data
         if latest_snapshot and latest_snapshot.subscribers_count and subreddit.population:
             bubble_data.append({
                 'x': posts_last_week,
@@ -116,6 +116,34 @@ def homepage(request):
             })
     
     bubble_chart_data_json = json.dumps(bubble_data)
+    
+    # BUBBLE CHART 2: Subscribers vs Posts (last 7 days) with Pop Density as bubble size
+    density_bubble_data = []
+    for subreddit in subreddits:
+        # Skip washingtondc (extreme outlier)
+        if subreddit.name.lower() == 'washingtondc':
+            continue
+            
+        # Get latest subscriber count
+        latest_snapshot = subreddit.subredditdailystats_set.order_by('-date_created').first()
+        
+        # Get post count from last 7 days
+        posts_last_week = Post.objects.filter(
+            subreddit=subreddit,
+            created_utc__gte=seven_days_ago
+        ).count()
+        
+        # Only include if we have all required data
+        if latest_snapshot and latest_snapshot.subscribers_count and subreddit.pop_density:
+            density_bubble_data.append({
+                'x': posts_last_week,
+                'y': latest_snapshot.subscribers_count,
+                'r': subreddit.pop_density / 50,  # Scale density for bubble size
+                'name': subreddit.name,
+                'pop_density': subreddit.pop_density  # Add original density for tooltip
+            })
+    
+    density_bubble_chart_data_json = json.dumps(density_bubble_data)
     # === END CHART DATA PREPARATION ===
     
     # Paginate (51 per page)
@@ -130,6 +158,7 @@ def homepage(request):
         'current_order': order,
         'line_chart_data': line_chart_data_json,
         'bubble_chart_data': bubble_chart_data_json,
+        'density_bubble_chart_data': density_bubble_chart_data_json,
     }
     
     return render(request, 'tracker/homepage.html', context)
