@@ -3,9 +3,9 @@ from .models import Subreddit, SubredditDailyStats, Post
 
 @admin.register(Subreddit)
 class SubredditAdmin(admin.ModelAdmin):
-    list_display = ['name', 'population','timezone','region', 'subscribers_count_display','residents_over_18']
+    list_display = ['name', 'population', 'subscribers_count_display', 'pop_density','timezone','region','residents_over_18']
     search_fields = ['name']
-    list_editable = ['population','residents_over_18','timezone','region']
+    list_editable = ['population', 'pop_density','residents_over_18','timezone','region']
     
     def subscribers_count_display(self, obj):
         latest = obj.subredditdailystats_set.order_by('-date_created').first()
