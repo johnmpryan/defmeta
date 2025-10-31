@@ -1,13 +1,13 @@
 """
-Backfill script to calculate total_estimated_upvotes and total_estimated_downvotes
-for existing SubredditDailyStats records by aggregating from Post table.
+Modified backfill script to calculate total_estimated_upvotes and total_estimated_downvotes
+for existing SubredditDailyStats records that have 0 values (not NULL).
 """
 
 import os
 import django
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
-from django.db.models import Sum
+from django.db.models import Sum, Q
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'defmeta.settings')
 django.setup()
@@ -20,13 +20,15 @@ logger = setup_logger(__name__)
 
 def backfill_snapshot_votes():
     """
-    Calculate total estimated votes for all existing snapshots by summing Post votes.
+    Calculate total estimated votes for snapshots with 0 values by summing Post votes.
     """
-    logger.info("Starting backfill of total estimated votes for snapshots")
+    logger.info("Starting backfill of total estimated votes for snapshots with 0 values")
     
-    # Get all snapshots that don't have total votes calculated yet
+    # Get all snapshots that have 0 for upvotes (likely means they need recalculation)
+    # Also check if posts_count > 0 to avoid processing empty days
     snapshots = SubredditDailyStats.objects.filter(
-        total_estimated_upvotes__isnull=True
+        Q(total_estimated_upvotes=0) | Q(total_estimated_upvotes__isnull=True),
+        posts_count__gt=0  # Only process if there were actually posts that day
     ).select_related('subreddit').order_by('date_created')
     
     total_snapshots = snapshots.count()
@@ -34,6 +36,7 @@ def backfill_snapshot_votes():
     
     updated_count = 0
     skipped_count = 0
+    no_posts_count = 0
     
     for snapshot in snapshots:
         try:
@@ -58,6 +61,20 @@ def backfill_snapshot_votes():
             start_of_day_utc = start_of_day_local.astimezone(ZoneInfo('UTC'))
             end_of_day_utc = end_of_day_local.astimezone(ZoneInfo('UTC'))
             
+            # First check if posts exist for this date with vote data
+            posts_with_votes = Post.objects.filter(
+                subreddit=subreddit,
+                created_utc__gte=start_of_day_utc,
+                created_utc__lte=end_of_day_utc,
+                estimated_upvotes__isnull=False,
+                estimated_downvotes__isnull=False
+            ).count()
+            
+            if posts_with_votes == 0:
+                no_posts_count += 1
+                logger.debug(f"No posts with vote data for {subreddit.name} on {target_date}")
+                continue
+            
             # Aggregate votes from posts for that day
             vote_totals = Post.objects.filter(
                 subreddit=subreddit,
@@ -70,45 +87,48 @@ def backfill_snapshot_votes():
                 total_down=Sum('estimated_downvotes')
             )
             
-            # Update snapshot with totals (will be None if no posts with votes)
-            snapshot.total_estimated_upvotes = vote_totals['total_up'] or 0
-            snapshot.total_estimated_downvotes = vote_totals['total_down'] or 0
-            snapshot.save(update_fields=['total_estimated_upvotes', 'total_estimated_downvotes'])
+            # Update snapshot with totals
+            new_upvotes = vote_totals['total_up'] or 0
+            new_downvotes = vote_totals['total_down'] or 0
             
-            updated_count += 1
-            
-            if updated_count % 50 == 0:
-                logger.info(f"Progress: {updated_count}/{total_snapshots} snapshots updated")
-            
-            # Log example for first few
-            if updated_count <= 3:
-                post_count = Post.objects.filter(
-                    subreddit=subreddit,
-                    created_utc__gte=start_of_day_utc,
-                    created_utc__lte=end_of_day_utc
-                ).count()
-                logger.info(f"  {subreddit.name} on {target_date}: "
-                           f"{post_count} posts, "
-                           f"up={snapshot.total_estimated_upvotes}, "
-                           f"down={snapshot.total_estimated_downvotes}")
+            # Only update if we found actual votes
+            if new_upvotes > 0 or new_downvotes > 0:
+                snapshot.total_estimated_upvotes = new_upvotes
+                snapshot.total_estimated_downvotes = new_downvotes
+                snapshot.save(update_fields=['total_estimated_upvotes', 'total_estimated_downvotes'])
+                
+                updated_count += 1
+                
+                if updated_count % 10 == 0:
+                    logger.info(f"Progress: {updated_count} snapshots updated")
+                
+                # Log first few updates as examples
+                if updated_count <= 3:
+                    logger.info(f"  {subreddit.name} on {target_date}: "
+                               f"{posts_with_votes} posts, "
+                               f"up={new_upvotes}, down={new_downvotes}")
+            else:
+                skipped_count += 1
             
         except Exception as e:
             logger.error(f"Error processing snapshot {snapshot.id}: {e}")
             skipped_count += 1
             continue
     
-    logger.info(f"Backfill complete: {updated_count} updated, {skipped_count} errors")
+    logger.info(f"Backfill complete:")
+    logger.info(f"  - {updated_count} snapshots updated with vote totals")
+    logger.info(f"  - {no_posts_count} snapshots had no posts with vote data")
+    logger.info(f"  - {skipped_count} snapshots skipped or errored")
     
     # Verify results
     snapshots_with_totals = SubredditDailyStats.objects.filter(
-        total_estimated_upvotes__isnull=False
+        total_estimated_upvotes__gt=0
     ).count()
-    logger.info(f"Total snapshots with vote totals: {snapshots_with_totals}")
+    logger.info(f"Total snapshots now with vote totals > 0: {snapshots_with_totals}")
     
     # Show some examples
-    logger.info("Sample of updated snapshots:")
+    logger.info("\nSample of updated snapshots:")
     samples = SubredditDailyStats.objects.filter(
-        total_estimated_upvotes__isnull=False,
         total_estimated_upvotes__gt=0
     ).order_by('-total_estimated_upvotes')[:5]
     
