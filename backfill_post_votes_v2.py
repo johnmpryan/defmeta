@@ -62,11 +62,12 @@ def backfill_post_votes():
     
     # Process individually for better tracking
     for i, post in enumerate(posts_to_check):
-        # Skip if already has estimates
-        if post.estimated_upvotes is not None and post.estimated_downvotes is not None:
+        # Skip if already has non-zero estimates (indicating real calculation)
+        if (post.estimated_upvotes is not None and post.estimated_upvotes > 0) or \
+           (post.estimated_downvotes is not None and post.estimated_downvotes > 0):
             already_had_count += 1
             continue
-            
+                
         estimated_up, estimated_down = calculate_estimated_votes(post.score, post.upvote_ratio)
         
         if estimated_up is not None and estimated_down is not None:
