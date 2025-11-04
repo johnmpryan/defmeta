@@ -9,6 +9,8 @@ from tracker.models import Subreddit, SubredditDailyStats
 from reddit_oauth import get_reddit_client
 from logger_config import setup_logger
 
+# older script that does not rely on post data from db
+
 logger = setup_logger('backfill_engagement')
 
 def backfill_engagement_data(days_back=14):
