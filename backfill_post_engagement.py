@@ -93,7 +93,7 @@ def main():
     # backfill_engagement_for_date_range()
     
     # Option 2: Process specific date range (uncomment and edit dates)
-    backfill_engagement_for_date_range("2025-10-20", "2025-10-31")
+    backfill_engagement_for_date_range("2025-10-20")
 
 if __name__ == "__main__":
     main()
