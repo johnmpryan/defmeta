@@ -1,5 +1,16 @@
 from django.contrib import admin
-from .models import Subreddit, SubredditDailyStats, Post
+from .models import Subreddit, SubredditDailyStats, Post, Tag, PostTag
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category', 'usage_count', 'is_active']
+    list_filter = ['category', 'is_active']
+    search_fields = ['name', 'description']
+
+@admin.register(PostTag)
+class PostTagAdmin(admin.ModelAdmin):
+    list_display = ['post', 'tag', 'confidence_score', 'needs_review', 'applied_by']
+    list_filter = ['needs_review', 'reviewed', 'applied_by']
 
 @admin.register(Subreddit)
 class SubredditAdmin(admin.ModelAdmin):
