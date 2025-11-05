@@ -134,10 +134,18 @@
 
 {% block content %}
     <div class="section-header">TRACKED SUBREDDITS</div>
-    
-    <p class="description">This application tracks engagement across U.S. State subreddits. Nightly, two processes call the Reddit API. First, subscriber count and all posts from the previous day are recorded. Then, engagement data is collected on all posts three days old. This data is then summariized in a daily snapshot record. Click on any Subreddit below to view daily snapshots. [<a href="https://github.com/johnmpryan/defmeta">Github repo</a>]</p>
 
-    <p class="description">Check back often. Data collection began in early October. New analysis and data points being added regularly.</>
+    <p class="description">This application tracks engagement across U.S. state subreddits, demonstrating automated data collection, aggregation, and AI-powered content analysis.</p>
+
+    <p class="description"><strong>Nightly automated pipeline:</strong><br>
+    <strong>• Data collection:</strong> Reddit API retrieves subscriber counts and all posts from the previous day<br>
+    <strong>• AI tagging:</strong> Claude analyzes post content and assigns categorical tags (topic, content type, sentiment)<br>
+    <strong>• Engagement tracking:</strong> Posts 3+ days old are updated with scores, comments, and vote estimates<br>
+    <strong>• Aggregation:</strong> Post-level metrics are rolled up into daily subreddit snapshots</p>
+
+    <p class="description"><strong>Explore the data:</strong> Click any subreddit to view historical snapshots. Click a snapshot date to see individual posts with AI-generated tags. [<a href="https://github.com/johnmpryan/defmeta">Github repo</a>]</p>
+
+    <p class="description">Check back often. Data collection began in early October. New analysis and data points being added regularly.</p>
 
     <!-- Tab Navigation -->
     <div class="terminal-table-container" style="margin-top: 30px;">
