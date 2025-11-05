@@ -72,6 +72,7 @@ class Post(models.Model):
     num_comments = models.IntegerField(null=True, blank=True)
     is_removed = models.BooleanField(default=False)
     engagement_collected = models.BooleanField(default=False)
+    tags_collected = models.BooleanField(default=False)
     
     # Estimated vote fields (calculated from score and upvote_ratio)
     estimated_upvotes = models.IntegerField(null=True, blank=True)
