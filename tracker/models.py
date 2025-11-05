@@ -91,3 +91,180 @@ class Post(models.Model):
     
     def __str__(self):
         return f"{self.subreddit.name}: {self.title[:50]}..."
+
+class Tag(models.Model):
+    CATEGORY_CHOICES = [
+        ('topic', 'Topic'),
+        ('content_type', 'Content Type'),
+        ('sentiment', 'Sentiment'),
+        ('geographic', 'Geographic'),
+        ('temporal', 'Temporal'),
+        ('meta', 'Meta'),
+    ]
+    
+    name = models.CharField(max_length=50, unique=True, db_index=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, db_index=True)
+    description = models.TextField(help_text="When to apply this tag - used for AI context")
+    
+    usage_count = models.IntegerField(default=0)
+    last_used = models.DateTimeField(null=True, blank=True)
+    
+    is_primary = models.BooleanField(default=False, help_text="Primary tags shown more prominently")
+    display_order = models.IntegerField(default=999)
+    is_active = models.BooleanField(default=True)
+    
+    created_by = models.CharField(max_length=50, default='system', choices=[('ai', 'AI'), ('admin', 'Admin'), ('system', 'System')])
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'tags'
+        ordering = ['category', 'display_order', 'name']
+        indexes = [
+            models.Index(fields=['category', 'is_active']),
+            models.Index(fields=['usage_count']),
+        ]
+    
+    def __str__(self):
+        return f"{self.category}: {self.name}"
+
+
+class PostTag(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='tags')
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='tagged_posts')
+    
+    applied_by = models.CharField(max_length=50)
+    applied_at = models.DateTimeField(auto_now_add=True)
+    confidence_score = models.FloatField(null=True, blank=True)
+    needs_review = models.BooleanField(default=False)
+    
+    reviewed = models.BooleanField(default=False)
+    reviewed_by = models.CharField(max_length=100, null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'post_tags'
+        unique_together = ['post', 'tag']
+        indexes = [
+            models.Index(fields=['post', 'tag']),
+            models.Index(fields=['needs_review', 'reviewed']),
+            models.Index(fields=['applied_at']),
+        ]
+
+class AITaggingLog(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    
+    model_version = models.CharField(max_length=50)
+    prompt_template = models.CharField(max_length=100)
+    prompt_version = models.CharField(max_length=20, default='v1.0')
+    
+    raw_response = models.JSONField()
+    tags_applied = models.JSONField()
+    confidence_scores = models.JSONField(null=True)
+    
+    processing_time_ms = models.IntegerField(null=True)
+    token_count = models.IntegerField(null=True)
+    estimated_cost = models.DecimalField(max_digits=6, decimal_places=4, null=True)
+    
+    success = models.BooleanField(default=True)
+    error_message = models.TextField(null=True, blank=True)
+    
+    date_created = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'ai_tagging_logs'
+        ordering = ['-date_created']
+        indexes = [
+            models.Index(fields=['-date_created']),
+            models.Index(fields=['post', '-date_created']),
+            models.Index(fields=['success']),
+        ]
+
+class Tag(models.Model):
+    CATEGORY_CHOICES = [
+        ('topic', 'Topic'),
+        ('content_type', 'Content Type'),
+        ('sentiment', 'Sentiment'),
+        ('geographic', 'Geographic'),
+        ('temporal', 'Temporal'),
+        ('meta', 'Meta'),
+    ]
+    
+    name = models.CharField(max_length=50, unique=True, db_index=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, db_index=True)
+    description = models.TextField(help_text="When to apply this tag - used for AI context")
+    
+    usage_count = models.IntegerField(default=0)
+    last_used = models.DateTimeField(null=True, blank=True)
+    
+    is_primary = models.BooleanField(default=False, help_text="Primary tags shown more prominently")
+    display_order = models.IntegerField(default=999)
+    is_active = models.BooleanField(default=True)
+    
+    created_by = models.CharField(max_length=50, default='system', choices=[('ai', 'AI'), ('admin', 'Admin'), ('system', 'System')])
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'tags'
+        ordering = ['category', 'display_order', 'name']
+        indexes = [
+            models.Index(fields=['category', 'is_active']),
+            models.Index(fields=['usage_count']),
+        ]
+    
+    def __str__(self):
+        return f"{self.category}: {self.name}"
+
+
+class PostTag(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='tags')
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='tagged_posts')
+    
+    applied_by = models.CharField(max_length=50)
+    applied_at = models.DateTimeField(auto_now_add=True)
+    confidence_score = models.FloatField(null=True, blank=True)
+    needs_review = models.BooleanField(default=False)
+    
+    reviewed = models.BooleanField(default=False)
+    reviewed_by = models.CharField(max_length=100, null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'post_tags'
+        unique_together = ['post', 'tag']
+        indexes = [
+            models.Index(fields=['post', 'tag']),
+            models.Index(fields=['needs_review', 'reviewed']),
+            models.Index(fields=['applied_at']),
+        ]
+
+
+class AITaggingLog(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    
+    model_version = models.CharField(max_length=50)
+    prompt_template = models.CharField(max_length=100)
+    prompt_version = models.CharField(max_length=20, default='v1.0')
+    
+    raw_response = models.JSONField()
+    tags_applied = models.JSONField()
+    confidence_scores = models.JSONField(null=True)
+    
+    processing_time_ms = models.IntegerField(null=True)
+    token_count = models.IntegerField(null=True)
+    estimated_cost = models.DecimalField(max_digits=6, decimal_places=4, null=True)
+    
+    success = models.BooleanField(default=True)
+    error_message = models.TextField(null=True, blank=True)
+    
+    date_created = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'ai_tagging_logs'
+        ordering = ['-date_created']
+        indexes = [
+            models.Index(fields=['-date_created']),
+            models.Index(fields=['post', '-date_created']),
+            models.Index(fields=['success']),
+        ]
