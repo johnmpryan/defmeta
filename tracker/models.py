@@ -64,7 +64,7 @@ class Post(models.Model):
     
     # Timestamp fields
     created_utc = models.DateTimeField()  # UTC timestamp from Reddit
-    created_local = models.DateTimeField()  # Local timezone for the state
+    created_local = models.DateField()    # Changed from DateTimeField to DateField
     
     # Engagement fields (populated 3 days later)
     score = models.IntegerField(null=True, blank=True)
