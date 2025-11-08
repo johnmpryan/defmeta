@@ -273,7 +273,7 @@ def debug_post(subreddit_name, date_filter=None):
             print(f"Invalid date format: {date_filter}. Use YYYY-MM-DD")
             return
     
-    posts = posts_query.order_by('-created_utc')[:10]
+    posts = posts_query.order_by('-created_utc')[:50]
     
     if not posts:
         print("No posts found")
