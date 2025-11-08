@@ -242,7 +242,7 @@ def post_list(request, subreddit_name, date):
     # Get all posts for this subreddit on this date with sorting
     posts = Post.objects.filter(
         subreddit=subreddit,
-        created_local__date=parsed_date
+        created_local=parsed_date
     ).prefetch_related('tags__tag').order_by(order_clause)
     
     # Format date for breadcrumb (e.g., "Wednesday, 10/22")
