@@ -10,6 +10,9 @@ Usage:
     # Test mode - see changes for all posts on a specific date
     python fix_post_dates.py test all 2025-11-06
     
+    # Debug mode - detailed analysis of specific posts
+    python fix_post_dates.py debug texas 2025-10-21
+    
     # Dry run - show all changes without applying
     python fix_post_dates.py dryrun
     
@@ -240,6 +243,68 @@ def fix_all_dates():
     print("=" * 60)
 
 
+def debug_post(subreddit_name, date_filter=None):
+    """
+    Debug function to understand why dates aren't being detected as wrong.
+    
+    Args:
+        subreddit_name: Name of subreddit to debug
+        date_filter: Optional date string 'YYYY-MM-DD' to filter posts
+    """
+    print(f"\nDEBUG MODE for r/{subreddit_name}")
+    
+    # Get subreddit
+    subreddit = Subreddit.objects.filter(name=subreddit_name).first()
+    if not subreddit:
+        print(f"Subreddit '{subreddit_name}' not found!")
+        return
+    
+    # Build query
+    posts_query = Post.objects.filter(subreddit=subreddit)
+    
+    # Filter by date if specified
+    if date_filter:
+        try:
+            filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+            # Filter by UTC date
+            posts_query = posts_query.filter(created_utc__date=filter_date)
+            print(f"Filtering to posts created (UTC) on {filter_date}")
+        except ValueError:
+            print(f"Invalid date format: {date_filter}. Use YYYY-MM-DD")
+            return
+    
+    posts = posts_query.order_by('-created_utc')[:10]
+    
+    if not posts:
+        print("No posts found")
+        return
+    
+    print(f"Timezone for r/{subreddit_name}: {subreddit.timezone or 'America/New_York'}")
+    print("-" * 80)
+    
+    for post in posts:
+        print(f"\nPOST: {post.title[:60]}...")
+        print(f"  Reddit ID: {post.reddit_id}")
+        print(f"  created_utc: {post.created_utc}")
+        print(f"  created_local (from DB): {post.created_local}")
+        print(f"  created_local type: {type(post.created_local)}")
+        
+        # Calculate what the correct date should be
+        tz = ZoneInfo(subreddit.timezone or 'America/New_York')
+        
+        # Convert UTC to local timezone
+        local_datetime = post.created_utc.astimezone(tz)
+        correct_date = local_datetime.date()
+        
+        print(f"  UTC -> Local datetime: {local_datetime}")
+        print(f"  Correct local DATE should be: {correct_date}")
+        print(f"  Current vs Correct: {post.created_local} vs {correct_date}")
+        print(f"  Match? {post.created_local == correct_date}")
+        
+        if post.created_local != correct_date:
+            print(f"  *** NEEDS FIX: {post.created_local} -> {correct_date} ***")
+
+
 def show_usage():
     """Display usage instructions."""
     print(__doc__)
@@ -262,6 +327,15 @@ def main():
         test_date = sys.argv[3] if len(sys.argv) > 3 else None
         test_single_subreddit(subreddit_name, test_date)
         
+    elif command == 'debug':
+        if len(sys.argv) < 3:
+            print("Usage: python fix_post_dates.py debug <subreddit_name> [YYYY-MM-DD]")
+            return
+        
+        subreddit_name = sys.argv[2]
+        date_filter = sys.argv[3] if len(sys.argv) > 3 else None
+        debug_post(subreddit_name, date_filter)
+        
     elif command == 'dryrun':
         dry_run()
         
@@ -272,32 +346,6 @@ def main():
         print(f"Unknown command: {command}")
         show_usage()
 
-def debug_test(subreddit_name, post_id=None):
-    """Debug why dates aren't being detected as wrong"""
-    
-    if post_id:
-        posts = Post.objects.filter(reddit_id=post_id)
-    else:
-        subreddit = Subreddit.objects.get(name=subreddit_name)
-        posts = Post.objects.filter(subreddit=subreddit)[:5]
-    
-    for post in posts:
-        print(f"\nDEBUG POST: {post.title[:50]}")
-        print(f"  Subreddit: {post.subreddit.name}")
-        print(f"  Timezone: {post.subreddit.timezone or 'America/New_York'}")
-        print(f"  created_utc: {post.created_utc}")
-        print(f"  created_local (from DB): {post.created_local}")
-        print(f"  created_local type: {type(post.created_local)}")
-        
-        # Calculate correct date
-        tz = ZoneInfo(post.subreddit.timezone or 'America/New_York')
-        local_dt = post.created_utc.astimezone(tz)
-        correct_date = local_dt.date()
-        
-        print(f"  Local datetime should be: {local_dt}")
-        print(f"  Correct date should be: {correct_date}")
-        print(f"  Are they equal? {post.created_local == correct_date}")
-        print(f"  Comparison: {post.created_local} == {correct_date}")
 
 if __name__ == "__main__":
     main()
