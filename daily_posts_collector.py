@@ -62,7 +62,7 @@ def collect_yesterday_posts():
                 if start_timestamp <= post.created_utc <= end_timestamp:
                     # Convert UTC timestamp to datetime objects
                     utc_time = datetime.fromtimestamp(post.created_utc, ZoneInfo('UTC'))
-                    local_time = utc_time.astimezone(tz)
+                    local_time = utc_time.astimezone(tz).date()  # Add .date() to get just the date
                     
                     # Create post record
                     post_obj, created = Post.objects.get_or_create(
