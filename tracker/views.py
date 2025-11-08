@@ -231,9 +231,12 @@ def post_list(request, subreddit_name, date):
     # Parse the date string (YYYY-MM-DD) or return 404 if invalid
     try:
         parsed_date = datetime.strptime(date, '%Y-%m-%d').date()
+        # Subtract 1 day because snapshots are created the day after
+        from datetime import timedelta
+        parsed_date = parsed_date - timedelta(days=1)
     except ValueError:
-        from django.http import Http404
-        raise Http404("Invalid date format")
+       from django.http import Http404
+       raise Http404("Invalid date format")
     
     # Build the order_by clause
     order_prefix = '-' if order == 'desc' else ''
