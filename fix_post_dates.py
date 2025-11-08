@@ -272,6 +272,32 @@ def main():
         print(f"Unknown command: {command}")
         show_usage()
 
+def debug_test(subreddit_name, post_id=None):
+    """Debug why dates aren't being detected as wrong"""
+    
+    if post_id:
+        posts = Post.objects.filter(reddit_id=post_id)
+    else:
+        subreddit = Subreddit.objects.get(name=subreddit_name)
+        posts = Post.objects.filter(subreddit=subreddit)[:5]
+    
+    for post in posts:
+        print(f"\nDEBUG POST: {post.title[:50]}")
+        print(f"  Subreddit: {post.subreddit.name}")
+        print(f"  Timezone: {post.subreddit.timezone or 'America/New_York'}")
+        print(f"  created_utc: {post.created_utc}")
+        print(f"  created_local (from DB): {post.created_local}")
+        print(f"  created_local type: {type(post.created_local)}")
+        
+        # Calculate correct date
+        tz = ZoneInfo(post.subreddit.timezone or 'America/New_York')
+        local_dt = post.created_utc.astimezone(tz)
+        correct_date = local_dt.date()
+        
+        print(f"  Local datetime should be: {local_dt}")
+        print(f"  Correct date should be: {correct_date}")
+        print(f"  Are they equal? {post.created_local == correct_date}")
+        print(f"  Comparison: {post.created_local} == {correct_date}")
 
 if __name__ == "__main__":
     main()
