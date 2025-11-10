@@ -158,8 +158,8 @@ def homepage(request):
     ).order_by('-usage_count')[:20]
 
     # Prepare data for horizontal bar chart
-    tag_labels = [item['tag__name'] for item in reversed(top_tags)]  # Reversed for bottom-to-top display
-    tag_counts = [item['usage_count'] for item in reversed(top_tags)]
+    tag_labels = [item['tag__name'] for item in top_tags]  # Reversed for bottom-to-top display
+    tag_counts = [item['usage_count'] for item in top_tags]
 
     tag_chart_data = {
         'labels': tag_labels,
