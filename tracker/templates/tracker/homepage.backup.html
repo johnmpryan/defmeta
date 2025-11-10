@@ -269,12 +269,8 @@
                 <canvas id="totalSubscribersChart"></canvas>
             </div>
         </div>
-        <!-- CONTENT ANALYSIS Tab Content -->
         <div id="content-tab" class="tab-content">
-            <h2 style="color: #00FF00; margin-bottom: 20px;">Top Topics - Last 7 Days</h2>
-            <div class="chart-container" style="height: 600px;">
-                <canvas id="tagChart"></canvas>
-            </div>
+            <p class="description">Content analysis coming soon.</p>
         </div>
     </div>
 
@@ -583,85 +579,6 @@ const densityBubbleChart = new Chart(densityBubbleCtx, {
                     },
                     callback: function(value) {
                         return value.toLocaleString();
-                    }
-                }
-            }
-        }
-    }
-});
-
-// HORIZONTAL BAR CHART: Top Tags
-const tagChartData = {{ tag_chart_data|safe }};
-
-const tagCtx = document.getElementById('tagChart').getContext('2d');
-const tagChart = new Chart(tagCtx, {
-    type: 'bar',
-    data: {
-        labels: tagChartData.labels,
-        datasets: [{
-            label: 'Posts Tagged',
-            data: tagChartData.counts,
-            backgroundColor: 'rgba(0, 255, 0, 0.3)',
-            borderColor: '#00FF00',
-            borderWidth: 1,
-            barThickness: 20
-        }]
-    },
-    options: {
-        indexAxis: 'y',  // Makes it horizontal
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                backgroundColor: '#252525',
-                titleColor: '#00FF00',
-                bodyColor: '#00FF00',
-                borderColor: '#2a662a',
-                borderWidth: 1,
-                titleFont: {
-                    family: "'Courier New', monospace"
-                },
-                bodyFont: {
-                    family: "'Courier New', monospace"
-                }
-            }
-        },
-        scales: {
-            x: {
-                grid: {
-                    color: '#2a662a',
-                    borderColor: '#2a662a'
-                },
-                ticks: {
-                    color: '#00FF00',
-                    font: {
-                        family: "'Courier New', monospace",
-                        size: 11
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Number of Posts',
-                    color: '#00FF00',
-                    font: {
-                        family: "'Courier New', monospace",
-                        size: 12
-                    }
-                }
-            },
-            y: {
-                grid: {
-                    color: '#2a662a',
-                    borderColor: '#2a662a'
-                },
-                ticks: {
-                    color: '#00FF00',
-                    font: {
-                        family: "'Courier New', monospace",
-                        size: 11
                     }
                 }
             }

@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from tracker.models import Subreddit, SubredditDailyStats, Post, PostTag
-from django.db.models import Sum, Count
+from tracker.models import Subreddit, SubredditDailyStats, Post
+from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from datetime import datetime, UTC, timedelta
 import json
@@ -146,29 +146,6 @@ def homepage(request):
     density_bubble_chart_data_json = json.dumps(density_bubble_data)
     # === END CHART DATA PREPARATION ===
     
-    # === TAG ANALYSIS FOR CONTENT TAB ===
-    # Get top 20 topic tags from last 7 days
-    seven_days_ago = datetime.now(UTC) - timedelta(days=7)
-
-    top_tags = PostTag.objects.filter(
-        # post__created_utc__gte=seven_days_ago,
-        tag__category='topic',
-    ).values('tag__name').annotate(
-        usage_count=Count('id')
-    ).order_by('usage_count')[:20]
-
-    # Prepare data for horizontal bar chart
-    tag_labels = [item['tag__name'] for item in reversed(top_tags)]  # Reversed for bottom-to-top display
-    tag_counts = [item['usage_count'] for item in reversed(top_tags)]
-
-    tag_chart_data = {
-        'labels': tag_labels,
-        'counts': tag_counts
-    }
-    tag_chart_data_json = json.dumps(tag_chart_data)
-
-    # === END TAG ANALYSIS ===
-
     # Paginate (51 per page)
     paginator = Paginator(subreddit_data, 51)
     page_number = request.GET.get('page')
@@ -182,7 +159,6 @@ def homepage(request):
         'line_chart_data': line_chart_data_json,
         'bubble_chart_data': bubble_chart_data_json,
         'density_bubble_chart_data': density_bubble_chart_data_json,
-        'tag_chart_data': tag_chart_data_json,
     }
     
     return render(request, 'tracker/homepage.html', context)
