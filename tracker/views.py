@@ -151,7 +151,7 @@ def homepage(request):
     seven_days_ago = datetime.now(UTC) - timedelta(days=7)
 
     top_tags = PostTag.objects.filter(
-        # post__created_utc__gte=seven_days_ago,
+        #post__created_utc__gte=seven_days_ago,
         tag__category='topic',
     ).values('tag__name').annotate(
         usage_count=Count('id')
