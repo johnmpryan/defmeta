@@ -98,7 +98,7 @@ def process_date_for_subreddit(reddit_subreddit, db_subreddit, target_date, tz):
             if start_timestamp <= post.created_utc <= end_timestamp:
                 # Convert UTC timestamp to datetime objects
                 utc_time = datetime.fromtimestamp(post.created_utc, ZoneInfo('UTC'))
-                local_time = utc_time.astimezone(tz)
+                local_time = utc_time.astimezone(tz).replace(tzinfo=None)
                 
                 # Use get_or_create to avoid duplicates
                 post_obj, created = Post.objects.get_or_create(
@@ -184,8 +184,8 @@ def main():
     # Or comment out and use backfill_all_historical() instead
     
     # Option 1: Specific date range
-    start_date = "2025-10-20"  
-    end_date = "2025-10-26"
+    start_date = "2025-11-07"  
+    end_date = "2025-11-09"
     get_posts_for_date_range(start_date, end_date)
     
     # Option 2: Backfill based on existing snapshots
