@@ -151,11 +151,11 @@ def homepage(request):
     seven_days_ago = datetime.now(UTC) - timedelta(days=7)
 
     top_tags = PostTag.objects.filter(
-        #post__created_utc__gte=seven_days_ago,
+        post__created_utc__gte=seven_days_ago,
         tag__category='topic',
     ).values('tag__name').annotate(
         usage_count=Count('id')
-    ).order_by('usage_count')[:20]
+    ).order_by('-usage_count')[:20]
 
     # Prepare data for horizontal bar chart
     tag_labels = [item['tag__name'] for item in reversed(top_tags)]  # Reversed for bottom-to-top display
