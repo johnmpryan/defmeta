@@ -250,13 +250,15 @@
         
         <!-- CHARTS Tab Content -->
         <div id="charts-tab" class="tab-content">
+            <p class="description">Below shows the interaction between a State's population and its subreddit's subscriber and recent post counts. <strong>While a greater state population seems to lead to greater subscriber counts, it does not seem to insure greater post engagement.</strong>[future research: pop affect on like and comment engagement]</p>
             <h2 style="color: #00FF00; margin-bottom: 20px;">Recent Post Activity vs Subscribers by State Population</h2>
             <div class="chart-container" style="height: 600px;">
                 <canvas id="bubbleChart"></canvas>
             </div>
-            
+            <p class="description">But by factoring in crude population density, a slightly more clear pattern emerges. States with greater population density seem to have more post engagement. But this signal is still mixed, with low density states still reaching the upper measures of post engagement. [future research: affects between state and city subreddits, other measures of density: metro areas over XXXX,]</p>
+
             <h2 style="color: #00FF00; margin: 40px 0 20px;">Recent Post Activity vs Subscribers by Population Density</h2>
-            <p class="description">District of Columbia excluded, pop density 10x greater than next closest.<p>
+            <p class="description">District of Columbia excluded, pop density 10x greater than next closest. <p>
             <div class="chart-container" style="height: 600px;">
                 <canvas id="densityBubbleChart"></canvas>
             </div>
