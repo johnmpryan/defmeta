@@ -203,8 +203,8 @@ def homepage(request):
     }
     tag_chart_data_json = json.dumps(tag_chart_data)
     
-    # Get list of all subreddit names for dropdown (alphabetically)
-    subreddit_names = sorted([s.name for s in subreddits])
+    # Get list of all subreddit names for dropdown (alphabetically, case-insensitive)
+    subreddit_names = sorted([s.name for s in subreddits], key=str.lower)
     subreddit_names_json = json.dumps(subreddit_names)
 
     # === END TAG ANALYSIS ===
