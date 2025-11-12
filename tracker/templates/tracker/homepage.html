@@ -53,6 +53,34 @@
         margin: 20px 0;
     }
     
+    /* ===== DROPDOWN STYLING ===== */
+    .subreddit-selector {
+        margin: 20px 0;
+    }
+    
+    .subreddit-selector label {
+        color: #00FF00;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+    
+    .subreddit-selector select {
+        background: #252525;
+        color: #00FF00;
+        border: 1px solid #2a662a;
+        padding: 8px 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        cursor: pointer;
+        min-width: 200px;
+    }
+    
+    .subreddit-selector select:focus {
+        outline: none;
+        border-color: #00FF00;
+    }
+    
     /* ===== HOMEPAGE-SPECIFIC TABLE LAYOUT ===== */
     
     /* Desktop: prompt (25px) + name (180px) + 4 stat columns */
@@ -150,9 +178,9 @@
     <!-- Tab Navigation -->
     <div class="terminal-table-container" style="margin-top: 30px;">
         <div class="tab-container">
-            <button class="tab-button active" onclick="switchTab('data')">DATA</button>
-            <button class="tab-button" onclick="switchTab('pop_effects')">POPULATION EFFECTS</button>
-            <button class="tab-button" onclick="switchTab('content')">CONTENT ANALYSIS</button>
+            <button class="tab-button active" onclick="switchTab(event, 'data')">DATA</button>
+            <button class="tab-button" onclick="switchTab(event, 'pop_effects')">POPULATION EFFECTS</button>
+            <button class="tab-button" onclick="switchTab(event, 'content')">CONTENT ANALYSIS</button>
         </div>
         
         <!-- DATA Tab Content -->
@@ -185,7 +213,7 @@
                             </a>                            <a href="?sort_by=snapshots&order={% if current_sort == 'snapshots' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-snapshots">
                                 Snapshots
                                 {% if current_sort == 'snapshots' %}
-                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                    <span class="sort-arrow">{% if current_sort == 'snapshots' %}↓{% else %}↑{% endif %}</span>
                                 {% endif %}
                             </a>
 
@@ -272,7 +300,17 @@
         <!-- CONTENT ANALYSIS Tab Content -->
         <div id="content-tab" class="tab-content">
             <h2 style="color: #00FF00; margin-bottom: 20px;">Top Topics - Last 7 Days</h2>
-            <p class="description">This is a raw count of tags across all State subreddit posts. This distrubition does not hold across all States.</p>
+            
+            <!-- Subreddit Dropdown -->
+            <div class="subreddit-selector">
+                <label for="subredditSelect">Compare subreddit:</label>
+                <select id="subredditSelect" onchange="updateTagChart()">
+                    <option value="all">All Subreddits</option>
+                </select>
+            </div>
+            
+            <p class="description">Select a subreddit to see how its tag usage compares to all other state subreddits. The chart shows the top 20 tags globally from the last 7 days.</p>
+            
             <div class="chart-container" style="height: 600px;">
                 <canvas id="tagChart"></canvas>
             </div>
@@ -280,7 +318,7 @@
     </div>
 
 <script>
-function switchTab(tabName) {
+function switchTab(event, tabName) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -591,83 +629,168 @@ const densityBubbleChart = new Chart(densityBubbleCtx, {
     }
 });
 
-// HORIZONTAL BAR CHART: Top Tags
-const tagChartData = {{ tag_chart_data|safe }};
+// === TAG CHART WITH STACKED BARS ===
 
-const tagCtx = document.getElementById('tagChart').getContext('2d');
-const tagChart = new Chart(tagCtx, {
-    type: 'bar',
-    data: {
-        labels: tagChartData.labels,
-        datasets: [{
-            label: 'Posts Tagged',
-            data: tagChartData.counts,
-            backgroundColor: 'rgba(0, 255, 0, 0.3)',
+// Get tag data from Django
+const tagChartData = {{ tag_chart_data|safe }};
+const subredditNames = {{ subreddit_names|safe }};
+
+// Populate dropdown with subreddit names
+const dropdown = document.getElementById('subredditSelect');
+subredditNames.forEach(name => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = `r/${name}`;
+    dropdown.appendChild(option);
+});
+
+// Global variable to store the chart instance
+let tagChart = null;
+
+// Function to update the chart based on dropdown selection
+function updateTagChart() {
+    const selectedSubreddit = document.getElementById('subredditSelect').value;
+    
+    // Prepare datasets
+    let datasets = [];
+    
+    if (selectedSubreddit === 'all') {
+        // Single dataset: all subreddits combined
+        datasets = [{
+            label: 'All Subreddits',
+            data: tagChartData.global_counts,
+            backgroundColor: '#00FF00',
             borderColor: '#00FF00',
-            borderWidth: 1,
-            barThickness: 20
-        }]
-    },
-    options: {
-        indexAxis: 'y',  // Makes it horizontal
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
+            borderWidth: 1
+        }];
+    } else {
+        // Two datasets: selected subreddit + others
+        const selectedCounts = [];
+        const otherCounts = [];
+        
+        tagChartData.tag_names.forEach((tagName, index) => {
+            const globalCount = tagChartData.global_counts[index];
+            const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selectedSubreddit] || 0;
+            const otherCount = globalCount - subredditCount;
+            
+            selectedCounts.push(subredditCount);
+            otherCounts.push(otherCount);
+        });
+        
+        datasets = [
+            {
+                label: `r/${selectedSubreddit}`,
+                data: selectedCounts,
+                backgroundColor: '#00FF00',
+                borderColor: '#00FF00',
+                borderWidth: 1
             },
-            tooltip: {
-                backgroundColor: '#252525',
-                titleColor: '#00FF00',
-                bodyColor: '#00FF00',
+            {
+                label: 'All Other Subreddits',
+                data: otherCounts,
+                backgroundColor: '#2a662a',
                 borderColor: '#2a662a',
-                borderWidth: 1,
-                titleFont: {
-                    family: "'Courier New', monospace"
-                },
-                bodyFont: {
-                    family: "'Courier New', monospace"
-                }
+                borderWidth: 1
             }
+        ];
+    }
+    
+    // Destroy existing chart if it exists
+    if (tagChart) {
+        tagChart.destroy();
+    }
+    
+    // Create new chart
+    const tagCtx = document.getElementById('tagChart').getContext('2d');
+    tagChart = new Chart(tagCtx, {
+        type: 'bar',
+        data: {
+            labels: tagChartData.tag_names,
+            datasets: datasets
         },
-        scales: {
-            x: {
-                grid: {
-                    color: '#2a662a',
-                    borderColor: '#2a662a'
-                },
-                ticks: {
-                    color: '#00FF00',
-                    font: {
-                        family: "'Courier New', monospace",
-                        size: 11
+        options: {
+            indexAxis: 'y',  // Horizontal bars
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: selectedSubreddit !== 'all',
+                    labels: {
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 12
+                        }
                     }
                 },
-                title: {
-                    display: true,
-                    text: 'Number of Posts',
-                    color: '#00FF00',
-                    font: {
-                        family: "'Courier New', monospace",
-                        size: 12
+                tooltip: {
+                    backgroundColor: '#252525',
+                    titleColor: '#00FF00',
+                    bodyColor: '#00FF00',
+                    borderColor: '#2a662a',
+                    borderWidth: 1,
+                    titleFont: {
+                        family: "'Courier New', monospace"
+                    },
+                    bodyFont: {
+                        family: "'Courier New', monospace"
+                    },
+                    callbacks: {
+                        footer: function(tooltipItems) {
+                            // Calculate total
+                            let total = 0;
+                            tooltipItems.forEach(item => {
+                                total += item.parsed.x;
+                            });
+                            return 'Total: ' + total.toLocaleString();
+                        }
                     }
                 }
             },
-            y: {
-                grid: {
-                    color: '#2a662a',
-                    borderColor: '#2a662a'
+            scales: {
+                x: {
+                    stacked: true,  // Enable stacking
+                    grid: {
+                        color: '#2a662a',
+                        borderColor: '#2a662a'
+                    },
+                    ticks: {
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 11
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Number of Posts',
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 12
+                        }
+                    }
                 },
-                ticks: {
-                    color: '#00FF00',
-                    font: {
-                        family: "'Courier New', monospace",
-                        size: 11
+                y: {
+                    stacked: true,  // Enable stacking
+                    grid: {
+                        color: '#2a662a',
+                        borderColor: '#2a662a'
+                    },
+                    ticks: {
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 11
+                        }
                     }
                 }
             }
         }
-    }
-});
+    });
+}
+
+// Initialize chart on page load with "All Subreddits"
+updateTagChart();
 </script>
 {% endblock %}

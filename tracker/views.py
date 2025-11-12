@@ -147,25 +147,49 @@ def homepage(request):
     # === END CHART DATA PREPARATION ===
     
     # === TAG ANALYSIS FOR CONTENT TAB ===
-    # Get top 20 topic tags from last 7 days
+    # Get top 20 topic tags from last 7 days globally
     seven_days_ago = datetime.now(UTC) - timedelta(days=7)
 
-    top_tags = PostTag.objects.filter(
+    top_tags_global = PostTag.objects.filter(
         post__created_utc__gte=seven_days_ago,
         tag__category='topic',
     ).values('tag__name').annotate(
-        usage_count=Count('id')
-    ).order_by('-usage_count')[:20]
+        total_count=Count('id')
+    ).order_by('-total_count')[:20]
 
-    # Prepare data for horizontal bar chart
-    tag_labels = [item['tag__name'] for item in top_tags]  # Reversed for bottom-to-top display
-    tag_counts = [item['usage_count'] for item in top_tags]
-
+    # Extract tag names for the top 20 tags
+    top_tag_names = [item['tag__name'] for item in top_tags_global]
+    
+    # Get counts per subreddit for these specific tags
+    tag_breakdown_by_subreddit = {}
+    
+    for tag_name in top_tag_names:
+        # Get count per subreddit for this tag
+        subreddit_counts = PostTag.objects.filter(
+            post__created_utc__gte=seven_days_ago,
+            tag__category='topic',
+            tag__name=tag_name
+        ).values('post__subreddit__name').annotate(
+            count=Count('id')
+        )
+        
+        # Store in dictionary: tag_name -> {subreddit_name: count}
+        tag_breakdown_by_subreddit[tag_name] = {
+            item['post__subreddit__name']: item['count'] 
+            for item in subreddit_counts
+        }
+    
+    # Prepare data for frontend
     tag_chart_data = {
-        'labels': tag_labels,
-        'counts': tag_counts
+        'tag_names': top_tag_names,
+        'global_counts': [item['total_count'] for item in top_tags_global],
+        'breakdown_by_subreddit': tag_breakdown_by_subreddit
     }
     tag_chart_data_json = json.dumps(tag_chart_data)
+    
+    # Get list of all subreddit names for dropdown (alphabetically)
+    subreddit_names = sorted([s.name for s in subreddits])
+    subreddit_names_json = json.dumps(subreddit_names)
 
     # === END TAG ANALYSIS ===
 
@@ -183,6 +207,7 @@ def homepage(request):
         'bubble_chart_data': bubble_chart_data_json,
         'density_bubble_chart_data': density_bubble_chart_data_json,
         'tag_chart_data': tag_chart_data_json,
+        'subreddit_names': subreddit_names_json,
     }
     
     return render(request, 'tracker/homepage.html', context)
