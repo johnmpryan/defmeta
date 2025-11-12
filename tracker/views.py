@@ -150,6 +150,20 @@ def homepage(request):
     # Get top 20 topic tags from last 7 days globally
     seven_days_ago = datetime.now(UTC) - timedelta(days=7)
 
+    # Get total post count for last 7 days (for percentage calculations)
+    total_posts_last_week = Post.objects.filter(
+        created_utc__gte=seven_days_ago
+    ).count()
+    
+    # Get post count per subreddit for last 7 days
+    posts_per_subreddit = {}
+    for subreddit in subreddits:
+        post_count = Post.objects.filter(
+            subreddit=subreddit,
+            created_utc__gte=seven_days_ago
+        ).count()
+        posts_per_subreddit[subreddit.name] = post_count
+
     top_tags_global = PostTag.objects.filter(
         post__created_utc__gte=seven_days_ago,
         tag__category='topic',
@@ -183,7 +197,9 @@ def homepage(request):
     tag_chart_data = {
         'tag_names': top_tag_names,
         'global_counts': [item['total_count'] for item in top_tags_global],
-        'breakdown_by_subreddit': tag_breakdown_by_subreddit
+        'breakdown_by_subreddit': tag_breakdown_by_subreddit,
+        'total_posts': total_posts_last_week,
+        'posts_per_subreddit': posts_per_subreddit
     }
     tag_chart_data_json = json.dumps(tag_chart_data)
     

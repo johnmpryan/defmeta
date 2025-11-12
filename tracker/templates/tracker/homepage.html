@@ -301,16 +301,26 @@
         <div id="content-tab" class="tab-content">
             <h2 style="color: #00FF00; margin-bottom: 20px;">Top Topics - Last 7 Days</h2>
             
-            <!-- Subreddit Dropdown -->
+            <!-- Subreddit Dropdown (shared by both charts) -->
             <div class="subreddit-selector">
                 <label for="subredditSelect">Compare subreddit:</label>
-                <select id="subredditSelect" onchange="updateTagChart()">
+                <select id="subredditSelect" onchange="updateAllTagCharts()">
                     <option value="all">All Subreddits</option>
                 </select>
             </div>
             
-            <p class="description">Select a subreddit to see how its tag usage compares to all other state subreddits. The chart shows the top 20 tags globally from the last 7 days.</p>
+            <p class="description">Select a subreddit to see how its tag usage compares to all other state subreddits. The charts show the top 20 tags globally from the last 7 days.</p>
             
+            <!-- Percentage Chart -->
+            <h3 style="color: #00FF00; margin: 30px 0 10px;">Tag Prevalence (% of Posts)</h3>
+            <p class="description" style="margin-bottom: 20px;">Shows what percentage of posts are tagged with each topic.</p>
+            <div class="chart-container" style="height: 600px;">
+                <canvas id="tagPercentChart"></canvas>
+            </div>
+            
+            <!-- Count Chart -->
+            <h3 style="color: #00FF00; margin: 40px 0 10px;">Tag Usage (Post Count)</h3>
+            <p class="description" style="margin-bottom: 20px;">Shows the raw number of posts tagged with each topic.</p>
             <div class="chart-container" style="height: 600px;">
                 <canvas id="tagChart"></canvas>
             </div>
@@ -635,20 +645,200 @@ const densityBubbleChart = new Chart(densityBubbleCtx, {
 const tagChartData = {{ tag_chart_data|safe }};
 const subredditNames = {{ subreddit_names|safe }};
 
-// Populate dropdown with subreddit names
-const dropdown = document.getElementById('subredditSelect');
-subredditNames.forEach(name => {
-    const option = document.createElement('option');
-    option.value = name;
-    option.textContent = `r/${name}`;
-    dropdown.appendChild(option);
-});
+// Only initialize if we have data
+if (tagChartData && subredditNames) {
+    // Populate dropdown with subreddit names
+    const dropdown = document.getElementById('subredditSelect');
+    subredditNames.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = `r/${name}`;
+        dropdown.appendChild(option);
+    });
+}
 
-// Global variable to store the chart instance
+// Global variables to store chart instances
 let tagChart = null;
+let tagPercentChart = null;
 
-// Function to update the chart based on dropdown selection
+// Function to update both charts when dropdown changes
+function updateAllTagCharts() {
+    updateTagPercentChart();
+    updateTagChart();
+}
+
+// Function to update the PERCENTAGE chart based on dropdown selection
+function updateTagPercentChart() {
+    if (!tagChartData || !subredditNames) {
+        console.log('Tag chart data not available');
+        return;
+    }
+    
+    const selectedSubreddit = document.getElementById('subredditSelect').value;
+    
+    // Prepare datasets
+    let datasets = [];
+    
+    if (selectedSubreddit === 'all') {
+        // Single dataset: percentages for all subreddits combined
+        const percentages = tagChartData.tag_names.map((tagName, index) => {
+            const tagCount = tagChartData.global_counts[index];
+            const totalPosts = tagChartData.total_posts;
+            return totalPosts > 0 ? (tagCount / totalPosts * 100) : 0;
+        });
+        
+        datasets = [{
+            label: 'All Subreddits',
+            data: percentages,
+            backgroundColor: '#00FF00',
+            borderColor: '#00FF00',
+            borderWidth: 1
+        }];
+    } else {
+        // Two datasets: selected subreddit % + others %
+        const selectedPercentages = [];
+        const otherPercentages = [];
+        
+        tagChartData.tag_names.forEach((tagName, index) => {
+            const globalCount = tagChartData.global_counts[index];
+            const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selectedSubreddit] || 0;
+            const otherCount = globalCount - subredditCount;
+            
+            // Calculate percentages (of posts WITH this tag, what % from selected vs others)
+            const selectedPercent = globalCount > 0 ? (subredditCount / globalCount * 100) : 0;
+            const otherPercent = globalCount > 0 ? (otherCount / globalCount * 100) : 0;
+            
+            selectedPercentages.push(selectedPercent);
+            otherPercentages.push(otherPercent);
+        });
+        
+        datasets = [
+            {
+                label: `r/${selectedSubreddit}`,
+                data: selectedPercentages,
+                backgroundColor: '#00FF00',
+                borderColor: '#00FF00',
+                borderWidth: 1
+            },
+            {
+                label: 'All Other Subreddits',
+                data: otherPercentages,
+                backgroundColor: '#2a662a',
+                borderColor: '#2a662a',
+                borderWidth: 1
+            }
+        ];
+    }
+    
+    // Destroy existing chart if it exists
+    if (tagPercentChart) {
+        tagPercentChart.destroy();
+    }
+    
+    // Create new percentage chart
+    const percentCtx = document.getElementById('tagPercentChart').getContext('2d');
+    tagPercentChart = new Chart(percentCtx, {
+        type: 'bar',
+        data: {
+            labels: tagChartData.tag_names,
+            datasets: datasets
+        },
+        options: {
+            indexAxis: 'y',  // Horizontal bars
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: selectedSubreddit !== 'all',
+                    labels: {
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#252525',
+                    titleColor: '#00FF00',
+                    bodyColor: '#00FF00',
+                    borderColor: '#2a662a',
+                    borderWidth: 1,
+                    titleFont: {
+                        family: "'Courier New', monospace"
+                    },
+                    bodyFont: {
+                        family: "'Courier New', monospace"
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.x.toFixed(1) + '%';
+                        },
+                        footer: function(tooltipItems) {
+                            if (selectedSubreddit === 'all') {
+                                return '';
+                            }
+                            // For stacked bars, show total is 100%
+                            return 'Total: 100%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    min: 0,
+                    max: 100,  // Fixed scale 0-100%
+                    grid: {
+                        color: '#2a662a',
+                        borderColor: '#2a662a'
+                    },
+                    ticks: {
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: selectedSubreddit === 'all' ? 'Percentage of All Posts' : 'Percentage of Posts with Tag',
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    stacked: true,
+                    grid: {
+                        color: '#2a662a',
+                        borderColor: '#2a662a'
+                    },
+                    ticks: {
+                        color: '#00FF00',
+                        font: {
+                            family: "'Courier New', monospace",
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Function to update the COUNT chart based on dropdown selection
 function updateTagChart() {
+    if (!tagChartData || !subredditNames) {
+        console.log('Tag chart data not available');
+        return;
+    }
+    
     const selectedSubreddit = document.getElementById('subredditSelect').value;
     
     // Prepare datasets
@@ -790,7 +980,9 @@ function updateTagChart() {
     });
 }
 
-// Initialize chart on page load with "All Subreddits"
-updateTagChart();
+// Initialize both charts on page load with "All Subreddits" only if we have data
+if (tagChartData && subredditNames) {
+    updateAllTagCharts();
+}
 </script>
 {% endblock %}
