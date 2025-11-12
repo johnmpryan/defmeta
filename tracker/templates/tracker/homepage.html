@@ -695,19 +695,22 @@ function updateTagPercentChart() {
             borderWidth: 1
         }];
     } else {
-        // Two datasets: selected subreddit % + others % (both use global denominator)
+        // Two datasets with subreddit-specific denominators
         const selectedPercentages = [];
         const otherPercentages = [];
+        
+        // Get total posts for selected subreddit and all others
+        const selectedSubredditTotalPosts = tagChartData.posts_per_subreddit[selectedSubreddit] || 0;
+        const otherSubredditsTotalPosts = tagChartData.total_posts - selectedSubredditTotalPosts;
         
         tagChartData.tag_names.forEach((tagName, index) => {
             const globalCount = tagChartData.global_counts[index];
             const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selectedSubreddit] || 0;
             const otherCount = globalCount - subredditCount;
             
-            // Calculate percentages using TOTAL POSTS as denominator
-            const totalPosts = tagChartData.total_posts;
-            const selectedPercent = totalPosts > 0 ? (subredditCount / totalPosts * 100) : 0;
-            const otherPercent = totalPosts > 0 ? (otherCount / totalPosts * 100) : 0;
+            // Calculate percentages using subreddit-specific denominators
+            const selectedPercent = selectedSubredditTotalPosts > 0 ? (subredditCount / selectedSubredditTotalPosts * 100) : 0;
+            const otherPercent = otherSubredditsTotalPosts > 0 ? (otherCount / otherSubredditsTotalPosts * 100) : 0;
             
             selectedPercentages.push(selectedPercent);
             otherPercentages.push(otherPercent);
@@ -774,26 +777,14 @@ function updateTagPercentChart() {
                     callbacks: {
                         label: function(context) {
                             return context.dataset.label + ': ' + context.parsed.x.toFixed(1) + '%';
-                        },
-                        footer: function(tooltipItems) {
-                            if (selectedSubreddit === 'all') {
-                                return '';
-                            }
-                            // Calculate total percentage
-                            let total = 0;
-                            tooltipItems.forEach(item => {
-                                total += item.parsed.x;
-                            });
-                            return 'Total: ' + total.toFixed(1) + '%';
                         }
                     }
                 }
             },
             scales: {
                 x: {
-                    stacked: true,
+                    stacked: false,  // No longer stacking to 100%
                     min: 0,
-                    max: 100,  // Fixed scale 0-100%
                     grid: {
                         color: '#2a662a',
                         borderColor: '#2a662a'
@@ -810,7 +801,7 @@ function updateTagPercentChart() {
                     },
                     title: {
                         display: true,
-                        text: 'Percentage of All Posts',
+                        text: 'Percentage of Posts (by subreddit group)',
                         color: '#00FF00',
                         font: {
                             family: "'Courier New', monospace",
@@ -819,7 +810,7 @@ function updateTagPercentChart() {
                     }
                 },
                 y: {
-                    stacked: true,
+                    stacked: false,  // No longer stacking
                     grid: {
                         color: '#2a662a',
                         borderColor: '#2a662a'
