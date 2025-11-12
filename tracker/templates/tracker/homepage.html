@@ -695,7 +695,7 @@ function updateTagPercentChart() {
             borderWidth: 1
         }];
     } else {
-        // Two datasets: selected subreddit % + others %
+        // Two datasets: selected subreddit % + others % (both use global denominator)
         const selectedPercentages = [];
         const otherPercentages = [];
         
@@ -704,9 +704,10 @@ function updateTagPercentChart() {
             const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selectedSubreddit] || 0;
             const otherCount = globalCount - subredditCount;
             
-            // Calculate percentages (of posts WITH this tag, what % from selected vs others)
-            const selectedPercent = globalCount > 0 ? (subredditCount / globalCount * 100) : 0;
-            const otherPercent = globalCount > 0 ? (otherCount / globalCount * 100) : 0;
+            // Calculate percentages using TOTAL POSTS as denominator
+            const totalPosts = tagChartData.total_posts;
+            const selectedPercent = totalPosts > 0 ? (subredditCount / totalPosts * 100) : 0;
+            const otherPercent = totalPosts > 0 ? (otherCount / totalPosts * 100) : 0;
             
             selectedPercentages.push(selectedPercent);
             otherPercentages.push(otherPercent);
@@ -778,8 +779,12 @@ function updateTagPercentChart() {
                             if (selectedSubreddit === 'all') {
                                 return '';
                             }
-                            // For stacked bars, show total is 100%
-                            return 'Total: 100%';
+                            // Calculate total percentage
+                            let total = 0;
+                            tooltipItems.forEach(item => {
+                                total += item.parsed.x;
+                            });
+                            return 'Total: ' + total.toFixed(1) + '%';
                         }
                     }
                 }
@@ -805,7 +810,7 @@ function updateTagPercentChart() {
                     },
                     title: {
                         display: true,
-                        text: selectedSubreddit === 'all' ? 'Percentage of All Posts' : 'Percentage of Posts with Tag',
+                        text: 'Percentage of All Posts',
                         color: '#00FF00',
                         font: {
                             family: "'Courier New', monospace",
