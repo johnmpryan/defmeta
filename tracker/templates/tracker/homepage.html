@@ -305,11 +305,17 @@
             
             <!-- Subreddit Dropdown (shared by both charts) -->
             <div class="subreddit-selector">
-                <label for="subredditSelect">Compare subreddit:</label>
-                <select id="subredditSelect" onchange="updateAllTagCharts()">
-                    <option value="all">All Subreddits</option>
+                <label for="subredditSelect1">Compare:</label>
+                <select id="subredditSelect1" onchange="updateAllTagCharts()">
+                    <option value="all">All Subreddits (National)</option>
                 </select>
-            </div>
+    
+            <label for="subredditSelect2" style="margin-left: 20px;">To:</label>
+                <select id="subredditSelect2" onchange="updateAllTagCharts()">
+                    <option value="other">All Other Subreddits</option>
+                    <option value="none" disabled>──────────</option>
+                </select>
+        </div>
             
             
             <!-- Percentage Chart -->
@@ -648,13 +654,22 @@ const subredditNames = {{ subreddit_names|safe }};
 
 // Only initialize if we have data
 if (tagChartData && subredditNames) {
-    // Populate dropdown with subreddit names
-    const dropdown = document.getElementById('subredditSelect');
+    // Populate both dropdowns with subreddit names
+    const dropdown1 = document.getElementById('subredditSelect1');
+    const dropdown2 = document.getElementById('subredditSelect2');
+    
     subredditNames.forEach(name => {
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = `r/${name}`;
-        dropdown.appendChild(option);
+        // Add to first dropdown
+        const option1 = document.createElement('option');
+        option1.value = name;
+        option1.textContent = `r/${name}`;
+        dropdown1.appendChild(option1);
+        
+        // Add to second dropdown
+        const option2 = document.createElement('option');
+        option2.value = name;
+        option2.textContent = `r/${name}`;
+        dropdown2.appendChild(option2);
     });
 }
 
@@ -675,13 +690,14 @@ function updateTagPercentChart() {
         return;
     }
     
-    const selectedSubreddit = document.getElementById('subredditSelect').value;
+    const selected1 = document.getElementById('subredditSelect1').value;
+    const selected2 = document.getElementById('subredditSelect2').value;
     
     // Prepare datasets
     let datasets = [];
     
-    if (selectedSubreddit === 'all') {
-        // Single dataset: percentages for all subreddits combined
+    if (selected1 === 'all' && selected2 === 'other') {
+        // Default: all subreddits combined
         const percentages = tagChartData.tag_names.map((tagName, index) => {
             const tagCount = tagChartData.global_counts[index];
             const totalPosts = tagChartData.total_posts;
@@ -695,21 +711,19 @@ function updateTagPercentChart() {
             borderColor: '#00FF00',
             borderWidth: 1
         }];
-    } else {
-        // Two datasets with subreddit-specific denominators
+    } else if (selected1 === 'all') {
+        // National vs specific subreddit
         const selectedPercentages = [];
         const otherPercentages = [];
         
-        // Get total posts for selected subreddit and all others
-        const selectedSubredditTotalPosts = tagChartData.posts_per_subreddit[selectedSubreddit] || 0;
+        const selectedSubredditTotalPosts = tagChartData.posts_per_subreddit[selected2] || 0;
         const otherSubredditsTotalPosts = tagChartData.total_posts - selectedSubredditTotalPosts;
         
         tagChartData.tag_names.forEach((tagName, index) => {
             const globalCount = tagChartData.global_counts[index];
-            const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selectedSubreddit] || 0;
+            const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selected2] || 0;
             const otherCount = globalCount - subredditCount;
             
-            // Calculate percentages using subreddit-specific denominators
             const selectedPercent = selectedSubredditTotalPosts > 0 ? (subredditCount / selectedSubredditTotalPosts * 100) : 0;
             const otherPercent = otherSubredditsTotalPosts > 0 ? (otherCount / otherSubredditsTotalPosts * 100) : 0;
             
@@ -719,7 +733,7 @@ function updateTagPercentChart() {
         
         datasets = [
             {
-                label: `r/${selectedSubreddit}`,
+                label: `r/${selected2}`,
                 data: selectedPercentages,
                 backgroundColor: '#00FF00',
                 borderColor: '#00FF00',
@@ -728,6 +742,77 @@ function updateTagPercentChart() {
             {
                 label: 'All Other Subreddits',
                 data: otherPercentages,
+                backgroundColor: '#2a662a',
+                borderColor: '#2a662a',
+                borderWidth: 1
+            }
+        ];
+    } else if (selected2 === 'other') {
+        // Specific subreddit vs all others
+        const selectedPercentages = [];
+        const otherPercentages = [];
+        
+        const selectedSubredditTotalPosts = tagChartData.posts_per_subreddit[selected1] || 0;
+        const otherSubredditsTotalPosts = tagChartData.total_posts - selectedSubredditTotalPosts;
+        
+        tagChartData.tag_names.forEach((tagName, index) => {
+            const globalCount = tagChartData.global_counts[index];
+            const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selected1] || 0;
+            const otherCount = globalCount - subredditCount;
+            
+            const selectedPercent = selectedSubredditTotalPosts > 0 ? (subredditCount / selectedSubredditTotalPosts * 100) : 0;
+            const otherPercent = otherSubredditsTotalPosts > 0 ? (otherCount / otherSubredditsTotalPosts * 100) : 0;
+            
+            selectedPercentages.push(selectedPercent);
+            otherPercentages.push(otherPercent);
+        });
+        
+        datasets = [
+            {
+                label: `r/${selected1}`,
+                data: selectedPercentages,
+                backgroundColor: '#00FF00',
+                borderColor: '#00FF00',
+                borderWidth: 1
+            },
+            {
+                label: 'All Other Subreddits',
+                data: otherPercentages,
+                backgroundColor: '#2a662a',
+                borderColor: '#2a662a',
+                borderWidth: 1
+            }
+        ];
+    } else {
+        // Two specific subreddits
+        const percentages1 = [];
+        const percentages2 = [];
+        
+        const totalPosts1 = tagChartData.posts_per_subreddit[selected1] || 0;
+        const totalPosts2 = tagChartData.posts_per_subreddit[selected2] || 0;
+        
+        tagChartData.tag_names.forEach((tagName) => {
+            const count1 = tagChartData.breakdown_by_subreddit[tagName][selected1] || 0;
+            const count2 = tagChartData.breakdown_by_subreddit[tagName][selected2] || 0;
+            
+            const percent1 = totalPosts1 > 0 ? (count1 / totalPosts1 * 100) : 0;
+            const percent2 = totalPosts2 > 0 ? (count2 / totalPosts2 * 100) : 0;
+            
+            percentages1.push(percent1);
+            percentages2.push(percent2);
+        });
+        
+        datasets = [
+            {
+                label: `r/${selected1}`,
+                data: percentages1,
+                backgroundColor: '#00FF00',
+                borderColor: '#00FF00',
+                borderWidth: 1
+            },
+            {
+                label: `r/${selected2}`,
+                data: percentages2,
                 backgroundColor: '#2a662a',
                 borderColor: '#2a662a',
                 borderWidth: 1
@@ -754,7 +839,7 @@ function updateTagPercentChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: selectedSubreddit !== 'all',
+                    display: datasets.length > 1,
                     labels: {
                         color: '#00FF00',
                         font: {
@@ -784,7 +869,7 @@ function updateTagPercentChart() {
             },
             scales: {
                 x: {
-                    stacked: false,  // No longer stacking to 100%
+                    stacked: false,
                     min: 0,
                     grid: {
                         color: '#2a662a',
@@ -802,7 +887,7 @@ function updateTagPercentChart() {
                     },
                     title: {
                         display: true,
-                        text: 'Percentage of Posts (by subreddit group)',
+                        text: 'Percentage of Posts (by subreddit)',
                         color: '#00FF00',
                         font: {
                             family: "'Courier New', monospace",
@@ -811,7 +896,7 @@ function updateTagPercentChart() {
                     }
                 },
                 y: {
-                    stacked: false,  // No longer stacking
+                    stacked: false,
                     grid: {
                         color: '#2a662a',
                         borderColor: '#2a662a'
@@ -836,13 +921,14 @@ function updateTagChart() {
         return;
     }
     
-    const selectedSubreddit = document.getElementById('subredditSelect').value;
+    const selected1 = document.getElementById('subredditSelect1').value;
+    const selected2 = document.getElementById('subredditSelect2').value;
     
     // Prepare datasets
     let datasets = [];
     
-    if (selectedSubreddit === 'all') {
-        // Single dataset: all subreddits combined
+    if (selected1 === 'all' && selected2 === 'other') {
+        // Default: all subreddits combined
         datasets = [{
             label: 'All Subreddits',
             data: tagChartData.global_counts,
@@ -850,14 +936,15 @@ function updateTagChart() {
             borderColor: '#00FF00',
             borderWidth: 1
         }];
-    } else {
-        // Two datasets: selected subreddit + others
+    } else if (selected1 === 'all' || selected2 === 'other') {
+        // One specific vs all others
+        const specificSub = selected1 === 'all' ? selected2 : selected1;
         const selectedCounts = [];
         const otherCounts = [];
         
         tagChartData.tag_names.forEach((tagName, index) => {
             const globalCount = tagChartData.global_counts[index];
-            const subredditCount = tagChartData.breakdown_by_subreddit[tagName][selectedSubreddit] || 0;
+            const subredditCount = tagChartData.breakdown_by_subreddit[tagName][specificSub] || 0;
             const otherCount = globalCount - subredditCount;
             
             selectedCounts.push(subredditCount);
@@ -866,7 +953,7 @@ function updateTagChart() {
         
         datasets = [
             {
-                label: `r/${selectedSubreddit}`,
+                label: `r/${specificSub}`,
                 data: selectedCounts,
                 backgroundColor: '#00FF00',
                 borderColor: '#00FF00',
@@ -875,6 +962,35 @@ function updateTagChart() {
             {
                 label: 'All Other Subreddits',
                 data: otherCounts,
+                backgroundColor: '#2a662a',
+                borderColor: '#2a662a',
+                borderWidth: 1
+            }
+        ];
+    } else {
+        // Two specific subreddits
+        const counts1 = [];
+        const counts2 = [];
+        
+        tagChartData.tag_names.forEach((tagName) => {
+            const count1 = tagChartData.breakdown_by_subreddit[tagName][selected1] || 0;
+            const count2 = tagChartData.breakdown_by_subreddit[tagName][selected2] || 0;
+            
+            counts1.push(count1);
+            counts2.push(count2);
+        });
+        
+        datasets = [
+            {
+                label: `r/${selected1}`,
+                data: counts1,
+                backgroundColor: '#00FF00',
+                borderColor: '#00FF00',
+                borderWidth: 1
+            },
+            {
+                label: `r/${selected2}`,
+                data: counts2,
                 backgroundColor: '#2a662a',
                 borderColor: '#2a662a',
                 borderWidth: 1
@@ -901,7 +1017,7 @@ function updateTagChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: selectedSubreddit !== 'all',
+                    display: datasets.length > 1,
                     labels: {
                         color: '#00FF00',
                         font: {
@@ -924,7 +1040,8 @@ function updateTagChart() {
                     },
                     callbacks: {
                         footer: function(tooltipItems) {
-                            // Calculate total
+                            // Only show total when stacking
+                            if (selected1 === 'all' && selected2 === 'other') return '';
                             let total = 0;
                             tooltipItems.forEach(item => {
                                 total += item.parsed.x;
@@ -936,7 +1053,7 @@ function updateTagChart() {
             },
             scales: {
                 x: {
-                    stacked: true,  // Enable stacking
+                    stacked: (selected1 === 'all' || selected2 === 'other') && !(selected1 === 'all' && selected2 === 'other'),
                     grid: {
                         color: '#2a662a',
                         borderColor: '#2a662a'
@@ -959,7 +1076,7 @@ function updateTagChart() {
                     }
                 },
                 y: {
-                    stacked: true,  // Enable stacking
+                    stacked: (selected1 === 'all' || selected2 === 'other') && !(selected1 === 'all' && selected2 === 'other'),
                     grid: {
                         color: '#2a662a',
                         borderColor: '#2a662a'
