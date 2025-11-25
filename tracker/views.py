@@ -266,6 +266,9 @@ def homepage(request):
     sub_names = []
     
     for subreddit in subreddits:
+        # Skip DC (extreme outlier)
+        if subreddit.name.lower() == 'washingtondc':
+            continue
         # Get latest subscriber count
         latest_snapshot = subreddit.subredditdailystats_set.order_by('-date_created').first()
         subscribers = latest_snapshot.subscribers_count if latest_snapshot else None
