@@ -5,9 +5,56 @@ from django.db.models import Sum, Count
 from django.db.models.functions import TruncDate
 from datetime import datetime, UTC, timedelta
 import json
+import math
+
+
+def calculate_quintile_tiers(values, labels):
+    """
+    Assign quintile tier (1-5) to each value.
+    Returns dict: {label: tier}
+    Tier 1 = smallest, Tier 5 = largest
+    """
+    if not values:
+        return {}
+    
+    # Filter out None values while keeping track of labels
+    valid_pairs = [(v, l) for v, l in zip(values, labels) if v is not None]
+    if not valid_pairs:
+        return {}
+    
+    valid_values, valid_labels = zip(*valid_pairs)
+    
+    # Calculate quintile thresholds
+    sorted_values = sorted(valid_values)
+    n = len(sorted_values)
+    
+    if n == 0:
+        return {}
+    
+    thresholds = [
+        sorted_values[max(0, int(n * 0.2) - 1)],
+        sorted_values[max(0, int(n * 0.4) - 1)],
+        sorted_values[max(0, int(n * 0.6) - 1)],
+        sorted_values[max(0, int(n * 0.8) - 1)],
+    ]
+    
+    def get_tier(val):
+        if val <= thresholds[0]:
+            return 1
+        elif val <= thresholds[1]:
+            return 2
+        elif val <= thresholds[2]:
+            return 3
+        elif val <= thresholds[3]:
+            return 4
+        else:
+            return 5
+    
+    return {l: get_tier(v) for v, l in zip(valid_values, valid_labels)}
+
 
 def homepage(request):
-    """Homepage with tabbed DATA/CHARTS view"""
+    """Homepage with tabbed DATA/CHARTS/EXPLORE view"""
     # Get sorting parameters
     sort_by = request.GET.get('sort_by', 'subscribers')
     order = request.GET.get('order', 'desc')
@@ -209,6 +256,90 @@ def homepage(request):
 
     # === END TAG ANALYSIS ===
 
+    # === EXPLORE TAB DATA ===
+    # Build comprehensive metrics for each subreddit
+    explore_data = []
+    
+    # Collect raw values for quintile calculation
+    pop_values = []
+    density_values = []
+    sub_names = []
+    
+    for subreddit in subreddits:
+        # Get latest subscriber count
+        latest_snapshot = subreddit.subredditdailystats_set.order_by('-date_created').first()
+        subscribers = latest_snapshot.subscribers_count if latest_snapshot else None
+        
+        # Get 7-day post metrics from Post table
+        post_stats = Post.objects.filter(
+            subreddit=subreddit,
+            created_utc__gte=seven_days_ago
+        ).aggregate(
+            post_count=Count('id'),
+            total_comments=Sum('num_comments'),
+            total_upvotes=Sum('estimated_upvotes'),
+            total_downvotes=Sum('estimated_downvotes')
+        )
+        
+        posts_7d = post_stats['post_count'] or 0
+        comments_7d = post_stats['total_comments'] or 0
+        upvotes_7d = post_stats['total_upvotes'] or 0
+        
+        # Get base values
+        population = subreddit.population
+        pop_density = subreddit.pop_density
+        region = subreddit.region
+        
+        # Population-based metrics (per 10k population)
+        subs_per_10k_pop = (subscribers / population * 10000) if (subscribers and population) else None
+        posts_per_10k_pop = (posts_7d / population * 10000) if population else None
+        
+        # Subscriber-based metrics (per 1k subscribers)
+        posts_per_1k_subs = (posts_7d / subscribers * 1000) if subscribers else None
+        comments_per_1k_subs = (comments_7d / subscribers * 1000) if subscribers else None
+        upvotes_per_1k_subs = (upvotes_7d / subscribers * 1000) if subscribers else None
+        
+        # Post-based metrics
+        comments_per_post = (comments_7d / posts_7d) if posts_7d > 0 else None
+        upvotes_per_post = (upvotes_7d / posts_7d) if posts_7d > 0 else None
+        
+        explore_data.append({
+            'name': subreddit.name,
+            'region': region or 'Unknown',
+            'population': population,
+            'pop_density': pop_density,
+            'subscribers': subscribers,
+            'posts_7d': posts_7d,
+            'comments_7d': comments_7d,
+            'upvotes_7d': upvotes_7d,
+            # Calculated metrics
+            'subs_per_10k_pop': round(subs_per_10k_pop, 2) if subs_per_10k_pop else None,
+            'posts_per_10k_pop': round(posts_per_10k_pop, 4) if posts_per_10k_pop else None,
+            'posts_per_1k_subs': round(posts_per_1k_subs, 2) if posts_per_1k_subs else None,
+            'comments_per_1k_subs': round(comments_per_1k_subs, 2) if comments_per_1k_subs else None,
+            'upvotes_per_1k_subs': round(upvotes_per_1k_subs, 2) if upvotes_per_1k_subs else None,
+            'comments_per_post': round(comments_per_post, 2) if comments_per_post else None,
+            'upvotes_per_post': round(upvotes_per_post, 2) if upvotes_per_post else None,
+        })
+        
+        # Collect for quintile calculation
+        sub_names.append(subreddit.name)
+        pop_values.append(population)
+        density_values.append(pop_density)
+    
+    # Calculate quintile tiers
+    pop_tiers = calculate_quintile_tiers(pop_values, sub_names)
+    density_tiers = calculate_quintile_tiers(density_values, sub_names)
+    
+    # Add tiers to explore_data
+    for item in explore_data:
+        item['pop_tier'] = pop_tiers.get(item['name'])
+        item['density_tier'] = density_tiers.get(item['name'])
+    
+    explore_data_json = json.dumps(explore_data)
+    
+    # === END EXPLORE TAB DATA ===
+
     # Paginate (51 per page)
     paginator = Paginator(subreddit_data, 51)
     page_number = request.GET.get('page')
@@ -224,9 +355,11 @@ def homepage(request):
         'density_bubble_chart_data': density_bubble_chart_data_json,
         'tag_chart_data': tag_chart_data_json,
         'subreddit_names': subreddit_names_json,
+        'explore_data': explore_data_json,
     }
     
     return render(request, 'tracker/homepage.html', context)
+
 
 def subreddit_detail(request, subreddit_name):
     """Display detail page for a specific subreddit with snapshot history and charts."""
@@ -282,6 +415,7 @@ def subreddit_detail(request, subreddit_name):
         'current_order': order,
         'chart_data': chart_data_json
     })
+
 
 def post_list(request, subreddit_name, date):
     """Display posts for a specific subreddit on a specific date."""
