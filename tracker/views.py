@@ -258,6 +258,8 @@ def homepage(request):
 
     # === EXPLORE TAB DATA ===
     # Build comprehensive metrics for each subreddit
+    ten_days_ago = datetime.now(UTC) - timedelta(days=10)
+    three_days_ago = datetime.now(UTC) - timedelta(days=3)
     explore_data = []
     
     # Collect raw values for quintile calculation
@@ -276,7 +278,8 @@ def homepage(request):
         # Get 7-day post metrics from Post table
         post_stats = Post.objects.filter(
             subreddit=subreddit,
-            created_utc__gte=seven_days_ago
+            created_utc__gte=ten_days_ago,
+            created_utc__lt=three_days_ago
         ).aggregate(
             post_count=Count('id'),
             total_comments=Sum('num_comments'),
