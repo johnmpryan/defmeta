@@ -265,11 +265,11 @@
                 <div class="hero-stat-value">{{ hero_stats.subscribers.value|floatformat:0|intcomma }}</div>
                 <div class="hero-stat-meta">
                     {% if not is_dc and hero_stats.subscribers.rank %}
-                        <span class="hero-rank">#{{ hero_stats.subscribers.rank }} of 50</span>
+                        <span class="hero-rank">#{{ hero_stats.subscribers.rank }} in State subreddits</span>
                     {% endif %}
                     {% if not is_dc and hero_stats.subscribers.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.subscribers.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.subscribers.vs_avg >= 0 %}+{% endif %}{{ hero_stats.subscribers.vs_avg|floatformat:0 }}% vs avg
+                            {% if hero_stats.subscribers.vs_avg >= 0 %}+{% endif %}{{ hero_stats.subscribers.vs_avg|floatformat:0 }}% than avg
                         </span>
                     {% endif %}
                 </div>
@@ -281,11 +281,11 @@
                 <div class="hero-stat-value">{{ hero_stats.posts.value|floatformat:1 }}</div>
                 <div class="hero-stat-meta">
                     {% if not is_dc and hero_stats.posts.rank %}
-                        <span class="hero-rank">#{{ hero_stats.posts.rank }} of 50</span>
+                        <span class="hero-rank">#{{ hero_stats.posts.rank }} in State subreddits</span>
                     {% endif %}
                     {% if not is_dc and hero_stats.posts.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.posts.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.posts.vs_avg >= 0 %}+{% endif %}{{ hero_stats.posts.vs_avg|floatformat:0 }}% vs avg
+                            {% if hero_stats.posts.vs_avg >= 0 %}+{% endif %}{{ hero_stats.posts.vs_avg|floatformat:0 }}% than avg
                         </span>
                     {% endif %}
                 </div>
@@ -297,11 +297,11 @@
                 <div class="hero-stat-value">{{ hero_stats.score.value|floatformat:1 }}</div>
                 <div class="hero-stat-meta">
                     {% if not is_dc and hero_stats.score.rank %}
-                        <span class="hero-rank">#{{ hero_stats.score.rank }} of 50</span>
+                        <span class="hero-rank">#{{ hero_stats.score.rank }} in State subreddits</span>
                     {% endif %}
                     {% if not is_dc and hero_stats.score.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.score.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.score.vs_avg >= 0 %}+{% endif %}{{ hero_stats.score.vs_avg|floatformat:0 }}% vs avg
+                            {% if hero_stats.score.vs_avg >= 0 %}+{% endif %}{{ hero_stats.score.vs_avg|floatformat:0 }}% than avg
                         </span>
                     {% endif %}
                 </div>
@@ -313,11 +313,11 @@
                 <div class="hero-stat-value">{{ hero_stats.comments.value|floatformat:1 }}</div>
                 <div class="hero-stat-meta">
                     {% if not is_dc and hero_stats.comments.rank %}
-                        <span class="hero-rank">#{{ hero_stats.comments.rank }} of 50</span>
+                        <span class="hero-rank">#{{ hero_stats.comments.rank }} in State subreddits</span>
                     {% endif %}
                     {% if not is_dc and hero_stats.comments.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.comments.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.comments.vs_avg >= 0 %}+{% endif %}{{ hero_stats.comments.vs_avg|floatformat:0 }}% vs avg
+                            {% if hero_stats.comments.vs_avg >= 0 %}+{% endif %}{{ hero_stats.comments.vs_avg|floatformat:0 }}% than avg
                         </span>
                     {% endif %}
                 </div>
