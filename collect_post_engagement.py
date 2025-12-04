@@ -40,19 +40,20 @@ def collect_engagement_for_three_day_old_posts():
     # Get posts from 3 days ago using created_local (DateField)
     target_date = datetime.now(UTC).date() - timedelta(days=3)
     
-    posts_to_update = Post.objects.filter(
+    # Convert to list upfront to prevent QuerySet re-evaluation during iteration
+    posts_to_update = list(Post.objects.filter(
         engagement_collected=False,
         created_local=target_date
-    ).order_by('created_utc')
+    ).order_by('created_utc'))
     
-    total_posts = posts_to_update.count()
+    total_posts = len(posts_to_update)
     logger.info(f"Found {total_posts} posts from {target_date} needing engagement data")
     
     updated_count = 0
     removed_count = 0
     error_count = 0
     
-    # Process in batches to avoid memory issues
+    # Process in batches for progress logging
     batch_size = 100
     
     for i in range(0, total_posts, batch_size):
