@@ -269,3 +269,139 @@ class AITaggingLog(models.Model):
             models.Index(fields=['post', '-date_created']),
             models.Index(fields=['success']),
         ]
+
+
+class GlobalMetrics(models.Model):
+    """
+    National averages across all 50 state subreddits (D.C. excluded).
+    One row per day.
+    """
+    date = models.DateField(unique=True, db_index=True)
+    
+    # 7-day rolling averages
+    subscribers_7day_avg = models.FloatField(null=True, blank=True)
+    posts_7day_avg = models.FloatField(null=True, blank=True)
+    score_7day_avg = models.FloatField(null=True, blank=True)
+    comments_7day_avg = models.FloatField(null=True, blank=True)
+    upvotes_7day_avg = models.FloatField(null=True, blank=True)
+    
+    # 30-day rolling averages
+    subscribers_30day_avg = models.FloatField(null=True, blank=True)
+    posts_30day_avg = models.FloatField(null=True, blank=True)
+    score_30day_avg = models.FloatField(null=True, blank=True)
+    comments_30day_avg = models.FloatField(null=True, blank=True)
+    upvotes_30day_avg = models.FloatField(null=True, blank=True)
+    
+    # Week-over-week changes (percentage)
+    subscribers_wow_change = models.FloatField(null=True, blank=True)
+    posts_wow_change = models.FloatField(null=True, blank=True)
+    score_wow_change = models.FloatField(null=True, blank=True)
+    comments_wow_change = models.FloatField(null=True, blank=True)
+    upvotes_wow_change = models.FloatField(null=True, blank=True)
+    
+    # Metadata
+    subreddits_included = models.IntegerField(default=50)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'global_metrics'
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"Global Metrics - {self.date}"
+
+
+class SubredditMetrics(models.Model):
+    """
+    Rolling metrics for each subreddit.
+    One row per subreddit per day.
+    """
+    subreddit = models.ForeignKey(Subreddit, on_delete=models.CASCADE)
+    date = models.DateField(db_index=True)
+    
+    # 7-day rolling averages
+    subscribers_7day_avg = models.FloatField(null=True, blank=True)
+    posts_7day_avg = models.FloatField(null=True, blank=True)
+    score_7day_avg = models.FloatField(null=True, blank=True)
+    comments_7day_avg = models.FloatField(null=True, blank=True)
+    upvotes_7day_avg = models.FloatField(null=True, blank=True)
+    
+    # 30-day rolling averages
+    subscribers_30day_avg = models.FloatField(null=True, blank=True)
+    posts_30day_avg = models.FloatField(null=True, blank=True)
+    score_30day_avg = models.FloatField(null=True, blank=True)
+    comments_30day_avg = models.FloatField(null=True, blank=True)
+    upvotes_30day_avg = models.FloatField(null=True, blank=True)
+    
+    # Week-over-week changes (percentage)
+    subscribers_wow_change = models.FloatField(null=True, blank=True)
+    posts_wow_change = models.FloatField(null=True, blank=True)
+    score_wow_change = models.FloatField(null=True, blank=True)
+    comments_wow_change = models.FloatField(null=True, blank=True)
+    upvotes_wow_change = models.FloatField(null=True, blank=True)
+    
+    # Ranks (1-50, NULL for D.C.)
+    subscribers_7day_rank = models.IntegerField(null=True, blank=True)
+    posts_7day_rank = models.IntegerField(null=True, blank=True)
+    score_7day_rank = models.IntegerField(null=True, blank=True)
+    comments_7day_rank = models.IntegerField(null=True, blank=True)
+    upvotes_7day_rank = models.IntegerField(null=True, blank=True)
+    
+    # Metadata
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'subreddit_metrics'
+        ordering = ['-date', 'subreddit__name']
+        unique_together = ['subreddit', 'date']
+        indexes = [
+            models.Index(fields=['subreddit', 'date']),
+            models.Index(fields=['date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.subreddit.name} - {self.date}"
+
+
+class MetricsDispersion(models.Model):
+    """
+    Dispersion statistics (median, std_dev, etc.) for global and subreddit metrics.
+    Flexible table supporting multiple entity types.
+    """
+    ENTITY_TYPE_CHOICES = [
+        ('global', 'Global'),
+        ('subreddit', 'Subreddit'),
+    ]
+    
+    date = models.DateField(db_index=True)
+    entity_type = models.CharField(max_length=20, choices=ENTITY_TYPE_CHOICES, db_index=True)
+    subreddit = models.ForeignKey(Subreddit, on_delete=models.CASCADE, null=True, blank=True)
+    metric_name = models.CharField(max_length=50, db_index=True)
+    
+    # Dispersion values
+    median = models.FloatField(null=True, blank=True)
+    std_dev = models.FloatField(null=True, blank=True)
+    min_value = models.FloatField(null=True, blank=True)
+    max_value = models.FloatField(null=True, blank=True)
+    p25 = models.FloatField(null=True, blank=True)
+    p75 = models.FloatField(null=True, blank=True)
+    
+    # Metadata
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'metrics_dispersion'
+        ordering = ['-date', 'entity_type', 'metric_name']
+        indexes = [
+            models.Index(fields=['date', 'entity_type']),
+            models.Index(fields=['date', 'entity_type', 'metric_name']),
+            models.Index(fields=['subreddit', 'date']),
+        ]
+    
+    def __str__(self):
+        if self.entity_type == 'global':
+            return f"Global - {self.metric_name} - {self.date}"
+        return f"{self.subreddit.name} - {self.metric_name} - {self.date}"
