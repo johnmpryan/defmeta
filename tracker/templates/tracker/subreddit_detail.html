@@ -103,6 +103,121 @@
         }
     }
     
+        /* ===== HERO STATS STYLING ===== */
+    .hero-stats-container {
+        background: #0a0a0a;
+        border: 1px solid #2a662a;
+        padding: 20px;
+        margin: 20px 0 30px 0;
+        width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .hero-stats-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #2a662a;
+    }
+    
+    .hero-title {
+        color: #00FF00;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .hero-date {
+        color: #888;
+        font-size: 12px;
+    }
+    
+    .hero-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    
+    .hero-stat {
+        text-align: center;
+        padding: 15px;
+        background: #151515;
+        border: 1px solid #1a1a1a;
+    }
+    
+    .hero-stat-label {
+        color: #888;
+        font-size: 12px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+    
+    .hero-stat-value {
+        color: #00FF00;
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .hero-stat-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+    }
+    
+    .hero-rank {
+        color: #888;
+        font-size: 12px;
+    }
+    
+    .hero-vs-avg {
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+    
+    .hero-vs-avg.positive {
+        color: #00FF00;
+        background: rgba(0, 255, 0, 0.1);
+    }
+    
+    .hero-vs-avg.negative {
+        color: #FF6B6B;
+        background: rgba(255, 107, 107, 0.1);
+    }
+    
+    .hero-dc-note {
+        color: #888;
+        font-size: 11px;
+        text-align: center;
+        margin-top: 15px;
+        font-style: italic;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-stats-container {
+            width: 100%;
+        }
+        
+        .hero-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .hero-stat-value {
+            font-size: 22px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .hero-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
     /* Very small mobile: Keep same column width as tablet */
     @media (max-width: 480px) {
         .table-header {
@@ -136,12 +251,89 @@
         </ol>
     </nav>
     <p class="description">Below are the recorded snapshots for r/{{ subreddit.name}}. Engagement data is populated 3 days after snapshot creation. Clicking on a date will show you all posts for that day.</p>
-    
-    <div class="section-header">r/{{ subreddit.name }}</div>
-    
-    {% if subreddit.subreddit_description %}
-    <p class="description">Subreddit Description: {{ subreddit.subreddit_description }}</p>
+
+    {% if hero_stats %}
+    <div class="hero-stats-container">
+        <div class="hero-stats-header">
+            <span class="hero-title">7-DAY AVERAGES</span>
+            <span class="hero-date">as of {{ hero_stats.date }}</span>
+        </div>
+        <div class="hero-stats-grid">
+            <!-- Subscribers -->
+            <div class="hero-stat">
+                <div class="hero-stat-label">Subscribers</div>
+                <div class="hero-stat-value">{{ hero_stats.subscribers.value|floatformat:0|intcomma }}</div>
+                <div class="hero-stat-meta">
+                    {% if not is_dc and hero_stats.subscribers.rank %}
+                        <span class="hero-rank">#{{ hero_stats.subscribers.rank }} of 50</span>
+                    {% endif %}
+                    {% if not is_dc and hero_stats.subscribers.vs_avg is not None %}
+                        <span class="hero-vs-avg {% if hero_stats.subscribers.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if hero_stats.subscribers.vs_avg >= 0 %}+{% endif %}{{ hero_stats.subscribers.vs_avg|floatformat:0 }}% vs avg
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Posts/Day -->
+            <div class="hero-stat">
+                <div class="hero-stat-label">Posts/Day</div>
+                <div class="hero-stat-value">{{ hero_stats.posts.value|floatformat:1 }}</div>
+                <div class="hero-stat-meta">
+                    {% if not is_dc and hero_stats.posts.rank %}
+                        <span class="hero-rank">#{{ hero_stats.posts.rank }} of 50</span>
+                    {% endif %}
+                    {% if not is_dc and hero_stats.posts.vs_avg is not None %}
+                        <span class="hero-vs-avg {% if hero_stats.posts.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if hero_stats.posts.vs_avg >= 0 %}+{% endif %}{{ hero_stats.posts.vs_avg|floatformat:0 }}% vs avg
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Avg Score -->
+            <div class="hero-stat">
+                <div class="hero-stat-label">Avg Score</div>
+                <div class="hero-stat-value">{{ hero_stats.score.value|floatformat:1 }}</div>
+                <div class="hero-stat-meta">
+                    {% if not is_dc and hero_stats.score.rank %}
+                        <span class="hero-rank">#{{ hero_stats.score.rank }} of 50</span>
+                    {% endif %}
+                    {% if not is_dc and hero_stats.score.vs_avg is not None %}
+                        <span class="hero-vs-avg {% if hero_stats.score.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if hero_stats.score.vs_avg >= 0 %}+{% endif %}{{ hero_stats.score.vs_avg|floatformat:0 }}% vs avg
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Comments/Post -->
+            <div class="hero-stat">
+                <div class="hero-stat-label">Comments/Post</div>
+                <div class="hero-stat-value">{{ hero_stats.comments.value|floatformat:1 }}</div>
+                <div class="hero-stat-meta">
+                    {% if not is_dc and hero_stats.comments.rank %}
+                        <span class="hero-rank">#{{ hero_stats.comments.rank }} of 50</span>
+                    {% endif %}
+                    {% if not is_dc and hero_stats.comments.vs_avg is not None %}
+                        <span class="hero-vs-avg {% if hero_stats.comments.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if hero_stats.comments.vs_avg >= 0 %}+{% endif %}{{ hero_stats.comments.vs_avg|floatformat:0 }}% vs avg
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if is_dc %}
+        <div class="hero-dc-note">
+            D.C. excluded from state comparisons due to unique characteristics
+        </div>
+        {% endif %}
+    </div>
     {% endif %}
+
+
+    
 
     <!-- Tab Navigation -->
     <div class="terminal-table-container" style="margin-top: 40px;">

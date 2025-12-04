@@ -8,6 +8,19 @@ import json
 import math
 
 
+def calculate_vs_avg(value, global_avg):
+    """
+    Calculate percentage difference vs global average.
+    
+    Returns:
+        Float percentage (positive = above avg, negative = below)
+        None if cannot calculate
+    """
+    if value is None or global_avg is None or global_avg == 0:
+        return None
+    return ((value - global_avg) / global_avg) * 100
+
+
 def calculate_quintile_tiers(values, labels):
     """
     Assign quintile tier (1-5) to each value.
@@ -390,6 +403,55 @@ def subreddit_detail(request, subreddit_name):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # === HERO STATS ===
+    # Get latest SubredditMetrics for this subreddit
+    from tracker.models import SubredditMetrics, GlobalMetrics
+    
+    latest_metrics = SubredditMetrics.objects.filter(
+        subreddit=subreddit
+    ).order_by('-date').first()
+    
+    # Get GlobalMetrics for the same date
+    global_metrics = None
+    if latest_metrics:
+        global_metrics = GlobalMetrics.objects.filter(
+            date=latest_metrics.date
+        ).first()
+    
+    # Calculate % vs national avg for each metric
+    hero_stats = None
+    is_dc = subreddit.name.lower() == 'washingtondc'
+    
+    if latest_metrics:
+        hero_stats = {
+            'date': latest_metrics.date,
+            'subscribers': {
+                'value': latest_metrics.subscribers_7day_avg,
+                'rank': latest_metrics.subscribers_7day_rank,
+                'vs_avg': calculate_vs_avg(latest_metrics.subscribers_7day_avg, 
+                                           global_metrics.subscribers_7day_avg if global_metrics else None),
+            },
+            'posts': {
+                'value': latest_metrics.posts_7day_avg,
+                'rank': latest_metrics.posts_7day_rank,
+                'vs_avg': calculate_vs_avg(latest_metrics.posts_7day_avg,
+                                           global_metrics.posts_7day_avg if global_metrics else None),
+            },
+            'score': {
+                'value': latest_metrics.score_7day_avg,
+                'rank': latest_metrics.score_7day_rank,
+                'vs_avg': calculate_vs_avg(latest_metrics.score_7day_avg,
+                                           global_metrics.score_7day_avg if global_metrics else None),
+            },
+            'comments': {
+                'value': latest_metrics.comments_7day_avg,
+                'rank': latest_metrics.comments_7day_rank,
+                'vs_avg': calculate_vs_avg(latest_metrics.comments_7day_avg,
+                                           global_metrics.comments_7day_avg if global_metrics else None),
+            },
+        }
+    # === END HERO STATS ===
+    
     # === CHART DATA PREPARATION ===
     # Get all snapshots ordered by date (oldest first for the chart)
     all_snapshots = SubredditDailyStats.objects.filter(
@@ -419,7 +481,9 @@ def subreddit_detail(request, subreddit_name):
         'page_obj': page_obj,
         'current_sort': sort_by,
         'current_order': order,
-        'chart_data': chart_data_json
+        'chart_data': chart_data_json,
+        'hero_stats': hero_stats,
+        'is_dc': is_dc,
     })
 
 
