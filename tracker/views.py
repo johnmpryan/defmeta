@@ -359,6 +359,39 @@ def homepage(request):
     
     # === END EXPLORE TAB DATA ===
 
+    # === RANKINGS DATA ===
+    from tracker.models import SubredditMetrics
+
+    # Get the most recent date with metrics
+    latest_metrics_date = SubredditMetrics.objects.exclude(
+        subreddit__name__iexact='washingtondc'
+    ).order_by('-date').values_list('date', flat=True).first()
+
+    rankings_data = []
+    if latest_metrics_date:
+        rankings_metrics = SubredditMetrics.objects.filter(
+            date=latest_metrics_date
+        ).exclude(
+            subreddit__name__iexact='washingtondc'
+        ).select_related('subreddit')
+        
+        for metric in rankings_metrics:
+            rankings_data.append({
+                'name': metric.subreddit.name,
+                'subscribers_7day_avg': metric.subscribers_7day_avg,
+                'posts_7day_avg': metric.posts_7day_avg,
+                'score_7day_avg': metric.score_7day_avg,
+                'comments_7day_avg': metric.comments_7day_avg,
+                'subscribers_7day_rank': metric.subscribers_7day_rank,
+                'posts_7day_rank': metric.posts_7day_rank,
+                'score_7day_rank': metric.score_7day_rank,
+                'comments_7day_rank': metric.comments_7day_rank,
+            })
+
+    rankings_data_json = json.dumps(rankings_data)
+# === END RANKINGS DATA ===
+
+
     # Paginate (51 per page)
     paginator = Paginator(subreddit_data, 51)
     page_number = request.GET.get('page')
@@ -375,6 +408,8 @@ def homepage(request):
         'tag_chart_data': tag_chart_data_json,
         'subreddit_names': subreddit_names_json,
         'explore_data': explore_data_json,
+        'rankings_data': rankings_data_json,
+        'rankings_date': latest_metrics_date,
     }
     
     return render(request, 'tracker/homepage.html', context)

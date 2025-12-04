@@ -46,6 +46,76 @@
         display: block;
     }
     
+    /* ===== RANKINGS TAB STYLING ===== */
+    .rankings-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .ranking-metric-btn {
+        background: #252525;
+        border: 1px solid #2a662a;
+        color: #888;
+        padding: 10px 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .ranking-metric-btn:hover {
+        border-color: #00FF00;
+        color: #00FF00;
+    }
+    
+    .ranking-metric-btn.active {
+        background: #00FF00;
+        color: #1a1a1a;
+        border-color: #00FF00;
+    }
+    
+    .rankings-header {
+        grid-template-columns: 80px 200px 1fr;
+    }
+    
+    .rankings-row {
+        display: grid;
+        grid-template-columns: 80px 200px 1fr;
+        padding: 12px 0;
+        border-bottom: 1px solid #1a1a1a;
+        align-items: center;
+    }
+    
+    .rankings-row:hover {
+        background: #151515;
+    }
+    
+    .rank-col {
+        color: #888;
+        font-weight: bold;
+    }
+    
+    .rankings-row .rank-col {
+        color: #00FF00;
+    }
+    
+    .name-col a {
+        color: #00FF00;
+        text-decoration: underline;
+    }
+    
+    .value-col {
+        text-align: right;
+        color: #00FF00;
+    }
+    
+    /* Top 3 highlighting */
+    .rankings-row.top-1 .rank-col { color: #FFD700; }
+    .rankings-row.top-2 .rank-col { color: #C0C0C0; }
+    .rankings-row.top-3 .rank-col { color: #CD7F32; }
+    
     /* ===== CHART STYLING ===== */
     .chart-container {
         position: relative;
@@ -235,6 +305,16 @@
         .explore-controls {
             flex-direction: column;
         }
+        
+        .rankings-header,
+        .rankings-row {
+            grid-template-columns: 50px 1fr 80px;
+        }
+        
+        .ranking-metric-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
     }
     
     /* Very small mobile: Tighten spacing further */
@@ -285,102 +365,42 @@
     <!-- Tab Navigation -->
     <div class="terminal-table-container" style="margin-top: 30px;">
         <div class="tab-container">
-            <button class="tab-button active" onclick="switchTab(event, 'data')">DATA</button>
+            <button class="tab-button active" onclick="switchTab(event, 'rankings')">RANKINGS</button>
             <button class="tab-button" onclick="switchTab(event, 'pop_effects')">POPULATION EFFECTS</button>
             <button class="tab-button" onclick="switchTab(event, 'content')">CONTENT ANALYSIS</button>
             <button class="tab-button" onclick="switchTab(event, 'explore')">DATA EXPLORER</button>
+            <button class="tab-button" onclick="switchTab(event, 'data')">SUBREDDIT DATA</button>
         </div>
         
-        <!-- DATA Tab Content -->
-        <div id="data-tab" class="tab-content active">
-            <p class="description">The table below shows most recent subscriber and post counts, as well as the count of daily 'snapshots'. Snapshots can be viewed by clicking on subreddit name.</p>
+        <!-- RANKINGS Tab Content -->
+        <div id="rankings-tab" class="tab-content active">
+            <p class="description">Rankings based on 7-day rolling averages. Select a metric to re-rank.</p>
             
-            {% if subreddit_data %}
+            <!-- Metric Selector -->
+            <div class="rankings-controls">
+                <button class="ranking-metric-btn active" data-metric="posts" onclick="switchRankingMetric('posts', this)">Posts/Day</button>
+                <button class="ranking-metric-btn" data-metric="subscribers" onclick="switchRankingMetric('subscribers', this)">Subscribers</button>
+                <button class="ranking-metric-btn" data-metric="score" onclick="switchRankingMetric('score', this)">Avg Score</button>
+                <button class="ranking-metric-btn" data-metric="comments" onclick="switchRankingMetric('comments', this)">Comments/Post</button>
+            </div>
+            
+            <!-- Rankings Table -->
+            <div class="terminal-table-container" style="border: none; padding: 0; margin: 0; width: 100%;">
                 <div class="terminal-table">
-                    <!-- Header Row -->
-                    <div class="table-header">
-                        <div class="header-prompt"></div>
-                        <a href="?sort_by=name&order={% if current_sort == 'name' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
-                            Subreddit
-                            {% if current_sort == 'name' %}
-                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                            {% endif %}
-                        </a>
-                        <div class="header-stats">
-                            <a href="?sort_by=subscribers&order={% if current_sort == 'subscribers' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-subscribers">
-                                Subscribers
-                                {% if current_sort == 'subscribers' %}
-                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                                {% endif %}
-                            </a>
-                            <a href="?sort_by=per_capita&order={% if current_sort == 'per_capita' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-per-capita">
-                                Per 10k pop.
-                                {% if current_sort == 'per_capita' %}
-                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
-                                {% endif %}
-                            </a>
-                            <a href="?sort_by=snapshots&order={% if current_sort == 'snapshots' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-snapshots">
-                                Snapshots
-                                {% if current_sort == 'snapshots' %}
-                                    <span class="sort-arrow">{% if current_sort == 'snapshots' %}↓{% else %}↑{% endif %}</span>
-                                {% endif %}
-                            </a>
-                        </div>
+                    <div class="table-header rankings-header">
+                        <div class="header-cell rank-col">Rank</div>
+                        <div class="header-cell name-col">Subreddit</div>
+                        <div class="header-cell value-col" id="rankings-value-header">Posts/Day</div>
                     </div>
-                    
-                    <!-- Data Rows -->
-                    {% for item in subreddit_data %}
-                        <div class="table-row">
-                            <span class="row-prompt">$</span>
-                            <a href="/r/{{ item.subreddit.name }}/" class="row-name">r/{{ item.subreddit.name }}</a>
-                            <div class="row-stats">
-                                <div class="stat-value stat-subscribers">
-                                    {% if item.latest_snapshot %}
-                                        {{ item.latest_snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </div>
-                                <div class="stat-value stat-per-capita">
-                                    {{ item.per_capita|default_if_none:"N/A"|floatformat:0 }}
-                                </div>
-                                <div class="stat-value stat-snapshots">
-                                    <a href="/r/{{ item.subreddit.name }}/">
-                                        {{ item.snapshot_count|intcomma }}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="empty-state">
-                            <p>No subreddits tracked yet.</p>
-                        </div>
-                    {% endfor %}
+                    <div id="rankings-table-body">
+                        <!-- Populated by JavaScript -->
+                    </div>
                 </div>
-                
-                <!-- Pagination -->
-                {% if page_obj.has_other_pages %}
-                <div class="pagination">
-                    {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
-                    {% else %}
-                        <span class="page-btn disabled">← Previous</span>
-                    {% endif %}
-                    
-                    <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-                    
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
-                    {% else %}
-                        <span class="page-btn disabled">Next →</span>
-                    {% endif %}
-                </div>
-                {% endif %}
-            {% else %}
-                <div class="empty-state">
-                    <p>No subreddits tracked yet.</p>
-                </div>
-            {% endif %}
+            </div>
+            
+            <p class="description" style="margin-top: 20px; font-size: 11px;">
+                Data as of {{ rankings_date }}. D.C. excluded from rankings.
+            </p>
         </div>
         
         <!-- POPULATION EFFECTS Tab Content -->
@@ -517,6 +537,98 @@
                 </table>
             </div>
         </div>
+        
+        <!-- SUBREDDIT DATA Tab Content -->
+        <div id="data-tab" class="tab-content">
+            <p class="description">The table below shows most recent subscriber and post counts, as well as the count of daily 'snapshots'. Snapshots can be viewed by clicking on subreddit name.</p>
+            
+            {% if subreddit_data %}
+                <div class="terminal-table">
+                    <!-- Header Row -->
+                    <div class="table-header">
+                        <div class="header-prompt"></div>
+                        <a href="?sort_by=name&order={% if current_sort == 'name' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-name">
+                            Subreddit
+                            {% if current_sort == 'name' %}
+                                <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                            {% endif %}
+                        </a>
+                        <div class="header-stats">
+                            <a href="?sort_by=subscribers&order={% if current_sort == 'subscribers' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-subscribers">
+                                Subscribers
+                                {% if current_sort == 'subscribers' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=per_capita&order={% if current_sort == 'per_capita' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-per-capita">
+                                Per 10k pop.
+                                {% if current_sort == 'per_capita' %}
+                                    <span class="sort-arrow">{% if current_order == 'desc' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                            <a href="?sort_by=snapshots&order={% if current_sort == 'snapshots' and current_order == 'desc' %}asc{% else %}desc{% endif %}" class="header-cell header-snapshots">
+                                Snapshots
+                                {% if current_sort == 'snapshots' %}
+                                    <span class="sort-arrow">{% if current_sort == 'snapshots' %}↓{% else %}↑{% endif %}</span>
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Rows -->
+                    {% for item in subreddit_data %}
+                        <div class="table-row">
+                            <span class="row-prompt">$</span>
+                            <a href="/r/{{ item.subreddit.name }}/" class="row-name">r/{{ item.subreddit.name }}</a>
+                            <div class="row-stats">
+                                <div class="stat-value stat-subscribers">
+                                    {% if item.latest_snapshot %}
+                                        {{ item.latest_snapshot.subscribers_count|default_if_none:"N/A"|intcomma }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div class="stat-value stat-per-capita">
+                                    {{ item.per_capita|default_if_none:"N/A"|floatformat:0 }}
+                                </div>
+                                <div class="stat-value stat-snapshots">
+                                    <a href="/r/{{ item.subreddit.name }}/">
+                                        {{ item.snapshot_count|intcomma }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <p>No subreddits tracked yet.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">← Previous</a>
+                    {% else %}
+                        <span class="page-btn disabled">← Previous</span>
+                    {% endif %}
+                    
+                    <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&sort_by={{ current_sort }}&order={{ current_order }}" class="page-btn">Next →</a>
+                    {% else %}
+                        <span class="page-btn disabled">Next →</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <p>No subreddits tracked yet.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
 <script>
@@ -537,6 +649,105 @@ function switchTab(event, tabName) {
     // Activate clicked button
     event.target.classList.add('active');
 }
+
+// === RANKINGS TAB FUNCTIONALITY ===
+
+// Rankings data from Django
+const rankingsData = {{ rankings_data|safe }};
+
+// Metric configuration
+const metricConfig = {
+    'posts': {
+        valueField: 'posts_7day_avg',
+        rankField: 'posts_7day_rank',
+        header: 'Posts/Day',
+        decimals: 1
+    },
+    'subscribers': {
+        valueField: 'subscribers_7day_avg',
+        rankField: 'subscribers_7day_rank',
+        header: 'Subscribers',
+        decimals: 0
+    },
+    'score': {
+        valueField: 'score_7day_avg',
+        rankField: 'score_7day_rank',
+        header: 'Avg Score',
+        decimals: 1
+    },
+    'comments': {
+        valueField: 'comments_7day_avg',
+        rankField: 'comments_7day_rank',
+        header: 'Comments/Post',
+        decimals: 1
+    }
+};
+
+function switchRankingMetric(metric, button) {
+    // Update active button
+    document.querySelectorAll('.ranking-metric-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    button.classList.add('active');
+    
+    // Update header
+    document.getElementById('rankings-value-header').textContent = metricConfig[metric].header;
+    
+    // Re-render table
+    renderRankingsTable(metric);
+}
+
+function renderRankingsTable(metric) {
+    const config = metricConfig[metric];
+    const tableBody = document.getElementById('rankings-table-body');
+    
+    // Sort by rank
+    const sortedData = [...rankingsData].sort((a, b) => {
+        const rankA = a[config.rankField] || 999;
+        const rankB = b[config.rankField] || 999;
+        return rankA - rankB;
+    });
+    
+    // Build HTML
+    let html = '';
+    sortedData.forEach(item => {
+        const rank = item[config.rankField];
+        const value = item[config.valueField];
+        
+        // Format value
+        let formattedValue = 'N/A';
+        if (value !== null && value !== undefined) {
+            formattedValue = config.decimals === 0 
+                ? Math.round(value).toLocaleString()
+                : value.toFixed(config.decimals);
+        }
+        
+        // Top 3 class
+        let topClass = '';
+        if (rank === 1) topClass = 'top-1';
+        else if (rank === 2) topClass = 'top-2';
+        else if (rank === 3) topClass = 'top-3';
+        
+        html += `
+            <div class="rankings-row ${topClass}">
+                <div class="rank-col">#${rank || 'N/A'}</div>
+                <div class="name-col"><a href="/r/${item.name}/">r/${item.name}</a></div>
+                <div class="value-col">${formattedValue}</div>
+            </div>
+        `;
+    });
+    
+    tableBody.innerHTML = html;
+}
+
+// Initialize rankings table on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (rankingsData && rankingsData.length > 0) {
+        renderRankingsTable('posts');
+    }
+});
+
+// === END RANKINGS TAB FUNCTIONALITY ===
 
 // Chart.js configuration for terminal aesthetic
 Chart.defaults.color = '#00FF00';
