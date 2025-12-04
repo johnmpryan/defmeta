@@ -76,13 +76,13 @@
         border-color: #00FF00;
     }
     
-    .rankings-header {
-        grid-template-columns: 80px 200px 1fr;
+    .table-header.rankings-header {
+        grid-template-columns: 60px 180px 120px;
     }
     
     .rankings-row {
         display: grid;
-        grid-template-columns: 80px 200px 1fr;
+        grid-template-columns: 60px 180px 120px;
         padding: 12px 0;
         border-bottom: 1px solid #1a1a1a;
         align-items: center;
@@ -113,7 +113,7 @@
     
     /* Top 3 highlighting */
     .rankings-row.top-1 .rank-col { color: #FFD700; }
-    .rankings-row.top-2 .rank-col { color: #C0C0C0; }
+    .rankings-row.top-2 .rank-col { color: #A8A8A8; }
     .rankings-row.top-3 .rank-col { color: #CD7F32; }
     
     /* ===== CHART STYLING ===== */
@@ -306,7 +306,7 @@
             flex-direction: column;
         }
         
-        .rankings-header,
+        .table-header.rankings-header,
         .rankings-row {
             grid-template-columns: 50px 1fr 80px;
         }
