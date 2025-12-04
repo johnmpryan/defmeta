@@ -269,7 +269,7 @@
                     {% endif %}
                     {% if not is_dc and hero_stats.subscribers.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.subscribers.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.subscribers.vs_avg >= 0 %}+{% endif %}{{ hero_stats.subscribers.vs_avg|floatformat:0 }}% than avg
+                            {{ hero_stats.subscribers.vs_avg|floatformat:0|cut:"-" }}% {% if hero_stats.subscribers.vs_avg >= 0 %}greater{% else %}less{% endif %} than avg
                         </span>
                     {% endif %}
                 </div>
@@ -285,7 +285,7 @@
                     {% endif %}
                     {% if not is_dc and hero_stats.posts.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.posts.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.posts.vs_avg >= 0 %}+{% endif %}{{ hero_stats.posts.vs_avg|floatformat:0 }}% than avg
+                            {{ hero_stats.posts.vs_avg|floatformat:0|cut:"-" }}% {% if hero_stats.posts.vs_avg >= 0 %}greater{% else %}less{% endif %} than avg
                         </span>
                     {% endif %}
                 </div>
@@ -301,7 +301,7 @@
                     {% endif %}
                     {% if not is_dc and hero_stats.score.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.score.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.score.vs_avg >= 0 %}+{% endif %}{{ hero_stats.score.vs_avg|floatformat:0 }}% than avg
+                            {{ hero_stats.score.vs_avg|floatformat:0|cut:"-" }}% {% if hero_stats.score.vs_avg >= 0 %}greater{% else %}less{% endif %} than avg
                         </span>
                     {% endif %}
                 </div>
@@ -317,7 +317,7 @@
                     {% endif %}
                     {% if not is_dc and hero_stats.comments.vs_avg is not None %}
                         <span class="hero-vs-avg {% if hero_stats.comments.vs_avg >= 0 %}positive{% else %}negative{% endif %}">
-                            {% if hero_stats.comments.vs_avg >= 0 %}+{% endif %}{{ hero_stats.comments.vs_avg|floatformat:0 }}% than avg
+                            {{ hero_stats.comments.vs_avg|floatformat:0|cut:"-" }}% {% if hero_stats.comments.vs_avg >= 0 %}greater{% else %}less{% endif %} than avg
                         </span>
                     {% endif %}
                 </div>
