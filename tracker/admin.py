@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Subreddit, SubredditDailyStats, Post, Tag, PostTag
+from .models import Subreddit, SubredditDailyStats, Post, Tag, PostTag, GlobalMetrics, SubredditMetrics, MetricsDispersion
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -56,3 +56,25 @@ class PostAdmin(admin.ModelAdmin):
         """Show first 60 chars of title"""
         return obj.title[:60] + '...' if len(obj.title) > 60 else obj.title
     title_preview.short_description = 'Title'
+
+@admin.register(GlobalMetrics)
+class GlobalMetricsAdmin(admin.ModelAdmin):
+    list_display = ['date', 'subscribers_7day_avg', 'posts_7day_avg', 'score_7day_avg', 'subreddits_included']
+    list_filter = ['date']
+    ordering = ['-date']
+
+
+@admin.register(SubredditMetrics)
+class SubredditMetricsAdmin(admin.ModelAdmin):
+    list_display = ['subreddit', 'date', 'subscribers_7day_avg', 'posts_7day_avg', 'score_7day_avg', 'subscribers_7day_rank']
+    list_filter = ['date', 'subreddit']
+    search_fields = ['subreddit__name']
+    ordering = ['-date', 'subreddit__name']
+
+
+@admin.register(MetricsDispersion)
+class MetricsDispersionAdmin(admin.ModelAdmin):
+    list_display = ['date', 'entity_type', 'subreddit', 'metric_name', 'median', 'std_dev']
+    list_filter = ['date', 'entity_type', 'metric_name']
+    search_fields = ['subreddit__name']
+    ordering = ['-date', 'entity_type', 'metric_name']
