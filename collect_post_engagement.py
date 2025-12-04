@@ -18,18 +18,13 @@ def calculate_estimated_votes(score, upvote_ratio):
     
     Returns tuple of (estimated_upvotes, estimated_downvotes) or (None, None) if cannot calculate.
     """
-    # Check if we can calculate (avoiding division by zero)
     if score is None or upvote_ratio is None or upvote_ratio == 0.5:
         return None, None
     
     try:
-        # Calculate total votes using the formula
         total_votes = score / (2 * upvote_ratio - 1)
-        
-        # Calculate estimated upvotes and downvotes
         estimated_upvotes = round(total_votes * upvote_ratio)
         estimated_downvotes = round(total_votes * (1 - upvote_ratio))
-        
         return estimated_upvotes, estimated_downvotes
     except (ZeroDivisionError, ValueError) as e:
         logger.warning(f"Could not calculate votes - score: {score}, ratio: {upvote_ratio}, error: {e}")
@@ -42,20 +37,16 @@ def collect_engagement_for_three_day_old_posts():
     """
     reddit = get_reddit_client()
     
-    # Calculate date range for 3-day-old posts (with some buffer)
-    now = datetime.now(UTC)
-    three_days_ago_start = now - timedelta(days=3, hours=2)  # 2 hour buffer
-    three_days_ago_end = now - timedelta(days=2, hours=22)   # 2 hour buffer
+    # Get posts from 3 days ago using created_local (DateField)
+    target_date = datetime.now(UTC).date() - timedelta(days=3)
     
-    # Find posts from 3 days ago that need engagement data
     posts_to_update = Post.objects.filter(
         engagement_collected=False,
-        created_utc__gte=three_days_ago_start,
-        created_utc__lt=three_days_ago_end
+        created_local=target_date
     ).order_by('created_utc')
     
     total_posts = posts_to_update.count()
-    logger.info(f"Found {total_posts} posts from 3 days ago needing engagement data")
+    logger.info(f"Found {total_posts} posts from {target_date} needing engagement data")
     
     updated_count = 0
     removed_count = 0
@@ -95,7 +86,7 @@ def collect_engagement_for_three_day_old_posts():
                     # Post was removed or deleted
                     post.is_removed = True
                     post.engagement_collected = True
-                    post.score = 0  # Set to 0 for removed posts
+                    post.score = 0
                     post.num_comments = 0
                     post.estimated_upvotes = 0
                     post.estimated_downvotes = 0
@@ -121,9 +112,6 @@ def collect_engagement_for_three_day_old_posts():
     return updated_count + removed_count
 
 def main():
-    """
-    Main function for engagement collection.
-    """
     collect_engagement_for_three_day_old_posts()
 
 if __name__ == "__main__":
