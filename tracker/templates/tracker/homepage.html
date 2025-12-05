@@ -5,6 +5,80 @@
 
 {% block extra_css %}
 <style>
+    /* ===== COLLAPSIBLE SECTION ===== */
+    .collapsible-header {
+        cursor: pointer;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        user-select: none;
+    }
+
+    .collapsible-header:hover {
+        opacity: 0.8;
+    }
+
+    .collapsible-indicator {
+        color: #00FF00;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        width: 16px;
+    }
+
+    .collapsible-title {
+        color: #00FF00;
+        font-weight: bold;
+    }
+
+    .collapsible-subtitle {
+        color: #888;
+        font-size: 13px;
+        font-style: italic;
+        margin-left: 5px;
+    }
+
+    .collapsible-content {
+        display: none;
+        padding: 15px 0 15px 26px;
+    }
+
+    .collapsible-content.expanded {
+        display: block;
+    }
+
+    .collapsible-content h4 {
+        color: #00FF00;
+        font-size: 14px;
+        margin: 15px 0 8px 0;
+    }
+
+    .collapsible-content h4:first-child {
+        margin-top: 0;
+    }
+
+    .collapsible-content ul {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 0 15px;
+    }
+
+    .collapsible-content li {
+        color: #e0e0e0;
+        font-size: 13px;
+        line-height: 1.6;
+        padding-left: 15px;
+        position: relative;
+    }
+
+    .collapsible-content li::before {
+        content: "•";
+        color: #00FF00;
+        position: absolute;
+        left: 0;
+    }
+
+
+
     /* ===== TAB NAVIGATION ===== */
     .tab-container {
         display: flex;
@@ -356,11 +430,38 @@
     <p class="description">Check back often. Data collection began in early October. New analysis and data points being added regularly.</p>
 
 
-    <p class="description"><strong>Nightly automated pipeline [<a href="https://github.com/johnmpryan/defmeta">Github repo</a>]:</strong><br>
-    <strong>• Data collection:</strong> Reddit API retrieves subscriber counts and all posts from the previous day<br>
-    <strong>• AI tagging:</strong> Claude analyzes post content and assigns categorical tags (topic, content type, sentiment)<br>
-    <strong>• Engagement tracking:</strong> Posts 3+ days old are updated with scores, comments, and vote estimates<br>
-    <strong>• Aggregation:</strong> Post-level metrics are rolled up into daily subreddit snapshots</p>
+    <div class="collapsible-section">
+        <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-indicator">+</span>
+            <span class="collapsible-title">How It Works</span>
+            <span class="collapsible-subtitle">— <a href="https://github.com/johnmpryan/defmeta" onclick="event.stopPropagation()">GitHub repo</a></span>
+        </div>
+        <div class="collapsible-content">
+            <p class="description" style="margin: 0 0 15px 0; font-style: italic;">Automated data collection, AI-powered analysis, and real-time analytics</p>
+            
+            <h4>Data Infrastructure</h4>
+            <ul>
+                <li>Automated nightly ETL pipeline collecting ~1,500+ posts/day via Reddit OAuth API</li>
+                <li>PostgreSQL database with normalized schema: reference tables, time-series snapshots, and post-level engagement data</li>
+                <li>Timezone-aware data collection ensuring accurate local-date attribution across all U.S. time zones</li>
+            </ul>
+            
+            <h4>AI Integration</h4>
+            <ul>
+                <li>Claude API integration for automated content classification (topic, sentiment, content type)</li>
+                <li>Batch processing with confidence scoring and audit logging</li>
+                <li>Tag prevalence analysis enabling comparative content insights across communities</li>
+            </ul>
+            
+            <h4>Analytics &amp; Visualization</h4>
+            <ul>
+                <li>Rolling 7-day and 30-day averages with automated rank calculations across 50 states</li>
+                <li>Population-normalized metrics (subscribers per 10k, posts per capita) for meaningful cross-state comparison</li>
+                <li>Interactive charts with multi-dimensional exploration: scatter plots, bubble charts, trend lines</li>
+                <li>Dynamic filtering by region, population tier, and density quintile</li>
+            </ul>
+        </div>
+    </div>
 
     <!-- Tab Navigation -->
     <div class="terminal-table-container" style="margin-top: 30px;">
@@ -1807,5 +1908,20 @@ if (exploreData && exploreData.length > 0) {
     updateExploreChart();
     renderExploreTable();
 }
+
+// Collapsible section toggle
+function toggleCollapsible(header) {
+    const content = header.nextElementSibling;
+    const indicator = header.querySelector('.collapsible-indicator');
+    
+    if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        indicator.textContent = '+';
+    } else {
+        content.classList.add('expanded');
+        indicator.textContent = '−';
+    }
+}
+
 </script>
 {% endblock %}
